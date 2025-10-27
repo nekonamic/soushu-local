@@ -15,8 +15,10 @@
   },
   "dependencies": {
     "@primeuix/themes": "^1.2.5",
+    "@primevue/forms": "^4.4.1",
     "@tailwindcss/vite": "^4.1.15",
     "axios": "^1.12.2",
+    "pinia": "^3.0.3",
     "primeicons": "^7.0.0",
     "primevue": "^4.4.1",
     "tailwindcss": "^4.1.15",
@@ -36,5 +38,8 @@
     "vite": "^7.1.11",
     "vite-plugin-vue-devtools": "^8.0.3",
     "vue-tsc": "^3.1.1"
+  },
+  "volta": {
+    "node": "22.21.0"
   }
 }

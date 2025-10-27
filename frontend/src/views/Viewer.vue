@@ -1,19 +1,27 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
-import axios from 'axios'
+import { getNovel, type Novel } from '@/api/main';
+import Skeleton from 'primevue/skeleton';
+import { useToast } from 'primevue/usetoast';
+
+const toast = useToast();
 
 const route = useRoute()
-const data = ref<any>(null)
+const data = ref<Novel>()
+const isLoading = ref(false)
 
 onMounted(async () => {
-  const tid = route.params.tid
-  console.log(tid)
+  const tidParam = route.params.tid
+  const tid = Number(tidParam)
+
   try {
-    const res = await axios.get('/api/novel', { params: { tid } })
-    data.value = res.data
-  } catch (err) {
-    console.error('请求失败:', err)
+    isLoading.value = true
+    data.value = await getNovel(tid)
+  } catch (err: any) {
+  toast.add({ severity: 'error', summary: '错误', detail: '请求失败', life: 3000 });
+  } finally {
+    isLoading.value = false
   }
 })
 </script>
@@ -23,18 +31,16 @@ onMounted(async () => {
     <div class=" flex justify-center mx-4">
       <div class=" w-3xl flex flex-col gap-2">
         <div>
-          <h1 class=" text-3xl font-bold">标题</h1>
+          <Skeleton width="20rem" height="2rem" class="mb-2" v-if="isLoading"></Skeleton>
+          <h1 class=" text-3xl font-bold" v-else>{{ data?.title }}</h1>
         </div>
         <div>
-          <p class="text-gray-300 text-sm">tid: {{ $route.params.tid }}</p>
+          <Skeleton width="10rem" class="mb-2" v-if="isLoading"></Skeleton>
+          <p class="text-gray-300 text-sm" v-else>tid: {{ $route.params.tid }}</p>
         </div>
         <div>
-          <p>
-            Lorem ipsum dolor sit amet, consectetur adipisicing elit. Inventore sed consequuntur error repudiandae
-            numquam deserunt quisquam repellat libero asperiores earum nam nobis, culpa ratione quam perferendis
-            esse, cupidita  te neque
-            quas!
-          </p>
+          <Skeleton width="100%" height="30rem" v-if="isLoading"></Skeleton>
+          <p class=" text-lg font-light" v-else>{{ data?.content }}</p>
         </div>
       </div>
     </div>
