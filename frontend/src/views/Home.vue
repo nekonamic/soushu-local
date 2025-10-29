@@ -25,27 +25,29 @@ const isLoading = ref(false)
 
 const offset = ref(0)
 
+const keyword = ref("")
+
 onMounted(() => {
   offset.value = (searchStore.page - 1) * rows.value;
 })
 
 async function search() {
-  const keyword = searchStore.keyword.trim();
-  if (!keyword) {
+  if (keyword.value != searchStore.keyword.trim()) {
+    keyword.value = searchStore.keyword.trim();
     searchStore.records = [];
     searchStore.total = 0;
     searchStore.page = 1;
-    return;
+    offset.value = (searchStore.page - 1) * rows.value;
   }
 
   try {
     isLoading.value = true;
-    const res = await searchNovels(searchStore.target, keyword, searchStore.page);
+    const res = await searchNovels(searchStore.target, keyword.value, searchStore.page);
     searchStore.records = [];
     searchStore.records = res.records;
     searchStore.total = res.total;
   } catch (err) {
-  toast.add({ severity: 'error', summary: '错误', detail: '搜索失败', life: 3000 });
+    toast.add({ severity: 'error', summary: '错误', detail: '搜索失败', life: 3000 });
   } finally {
     isLoading.value = false;
   }

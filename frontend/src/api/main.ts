@@ -1,4 +1,5 @@
-const apiBase = `${window.location.protocol}//${window.location.host}`;
+// const apiBase = `${window.location.protocol}//${window.location.host}`;
+const apiBase = `http://127.0.0.1:50721`;
 
 export interface Novel {
   tid: number;
