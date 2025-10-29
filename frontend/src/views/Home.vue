@@ -70,7 +70,7 @@ function onPageChange(event: { page: number }) {
         <h1
           class=" text-5xl font-bold bg-linear-to-bl from-violet-500 to-fuchsia-500 inline-block text-transparent bg-clip-text p-1">
           搜书吧: 大図書館</h1>
-        <h6 class=" text-gray-300 mt-2">搜书吧本地搜索</h6>
+        <h6 class=" text-gray-300 mt-2">搜书吧全文搜索(FTS)</h6>
       </div>
       <div class="w-full px-8 flex flex-col gap-4">
         <Form @submit="search" class="flex justify-center flex-col gap-4">
@@ -110,7 +110,7 @@ function onPageChange(event: { page: number }) {
               <p class="font-bold">{{ item.title }}</p>
             </template>
             <template #content>
-              <p class="m-0">{{ item.content }}</p>
+              <p class="m-0">{{ item.snippet }}</p>
             </template>
           </Card>
         </div>

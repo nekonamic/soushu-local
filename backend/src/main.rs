@@ -4,8 +4,9 @@ use actix_web::{App, HttpRequest, HttpResponse, HttpServer, Responder, Result, w
 use rusqlite::{Connection, OptionalExtension, params};
 use serde::Serialize;
 use std::sync::Mutex;
-use tantivy::TantivyDocument;
-use tantivy::{schema::Value, snippet::SnippetGenerator};
+use tantivy::{TantivyDocument};
+use tantivy::{schema::Value};
+use tantivy_jieba::JiebaTokenizer;
 use webbrowser;
 
 const PAGE_SIZE: i64 = 20;
@@ -36,7 +37,6 @@ struct AppState {
     conn: Mutex<Connection>,
     index: tantivy::Index,
     reader: tantivy::IndexReader,
-    schema: tantivy::schema::Schema,
     title_field: tantivy::schema::Field,
     content_field: tantivy::schema::Field,
     tid_field: tantivy::schema::Field,
@@ -74,28 +74,25 @@ async fn search(
         Err(_) => return HttpResponse::InternalServerError().finish(),
     };
 
-    let mut snippet_gen =
-        SnippetGenerator::create(&searcher, &query_obj, data.content_field).unwrap();
-    snippet_gen.set_max_num_chars(100);
-
+    let conn = data.conn.lock().unwrap();
     let mut records = Vec::new();
 
     for (_score, addr) in top_docs {
         if let Ok(doc) = searcher.doc::<TantivyDocument>(addr) {
             let tid_val = doc.get_first(data.tid_field).unwrap().as_u64().unwrap() as i64;
-            let title_val = doc
-                .get_first(data.title_field)
-                .unwrap()
-                .as_str()
-                .unwrap()
-                .to_string();
+            let title_val = doc.get_first(data.title_field).unwrap().as_str().unwrap().to_string();
 
-            let snippet = snippet_gen.snippet_from_doc(&doc).to_html();
-            records.push(Record {
-                tid: tid_val,
-                title: title_val,
-                snippet,
-            });
+            let mut stmt = conn
+                .prepare("SELECT substr(content, 1, 100) FROM novels WHERE tid=?1")
+                .unwrap();
+
+            if let Ok(snippet) = stmt.query_row([tid_val], |row| row.get::<usize, String>(0)) {
+                records.push(Record {
+                    tid: tid_val,
+                    title: title_val,
+                    snippet,
+                });
+            }
         }
     }
 
@@ -162,7 +159,10 @@ Server Start
 
     println!("{}", art);
 
-    let index = tantivy::Index::open_in_dir("./tantivy_index").expect("idx open fail");
+    let jieba_tokenizer = JiebaTokenizer {};
+
+    let index = tantivy::Index::open_in_dir("./index").expect("idx open fail");
+    index.tokenizers().register("jieba", jieba_tokenizer);
     let schema = index.schema();
     let reader = index.reader().unwrap();
 
@@ -185,7 +185,6 @@ Server Start
         conn: Mutex::new(conn),
         index,
         reader,
-        schema,
         title_field,
         content_field,
         tid_field,

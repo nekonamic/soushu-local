@@ -13,11 +13,17 @@ export interface PagedResult<T> {
   records: T[];
 }
 
+export interface Record {
+  tid: number;
+  title: string;
+  snippet: string;
+}
+
 export async function searchNovels(
   target: 'title' | 'content' | 'both',
   keyword: string,
   page: number = 1
-): Promise<PagedResult<Novel>> {
+): Promise<PagedResult<Record>> {
   const params = new URLSearchParams({
     target,
     keyword,
