@@ -40,7 +40,7 @@ onMounted(async () => {
         </div>
         <div>
           <Skeleton width="100%" height="30rem" v-if="isLoading"></Skeleton>
-          <p class=" text-lg font-light" v-else>{{ data?.content }}</p>
+          <p class=" text-lg font-light whitespace-pre-wrap" v-else>{{ data?.content }}</p>
         </div>
       </div>
     </div>
