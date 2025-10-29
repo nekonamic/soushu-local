@@ -1,5 +1,6 @@
-// const apiBase = `${window.location.protocol}//${window.location.host}`;
-const apiBase = `http://127.0.0.1:50721`;
+const apiBase = import.meta.env.VITE_API_BASE ||
+  `${window.location.protocol}//${window.location.host}`;
+
 
 export interface Novel {
   tid: number;
