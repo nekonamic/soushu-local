@@ -1,9 +1,11 @@
 use actix_cors::Cors;
 use actix_files::NamedFile;
-use actix_web::{web, App, HttpRequest, HttpResponse, HttpServer, Responder, Result};
+use actix_web::{App, HttpRequest, HttpResponse, HttpServer, Responder, Result, web};
 use rusqlite::{Connection, OptionalExtension, params};
 use serde::Serialize;
 use std::sync::Mutex;
+use tantivy::TantivyDocument;
+use tantivy::{schema::Value, snippet::SnippetGenerator};
 use webbrowser;
 
 const PAGE_SIZE: i64 = 20;
@@ -16,15 +18,28 @@ struct Novel {
 }
 
 #[derive(Serialize)]
-struct PagedResult<T> {
+struct Record {
+    tid: i64,
+    title: String,
+    snippet: String,
+}
+
+#[derive(Serialize)]
+struct PagedResult {
     total: i64,
     page: i64,
     page_size: i64,
-    records: Vec<T>,
+    records: Vec<Record>,
 }
 
 struct AppState {
     conn: Mutex<Connection>,
+    index: tantivy::Index,
+    reader: tantivy::IndexReader,
+    schema: tantivy::schema::Schema,
+    title_field: tantivy::schema::Field,
+    content_field: tantivy::schema::Field,
+    tid_field: tantivy::schema::Field,
 }
 
 // GET /api/search?target=title&keyword=xxx yyy&page=1
@@ -32,81 +47,66 @@ async fn search(
     data: web::Data<AppState>,
     query: web::Query<std::collections::HashMap<String, String>>,
 ) -> impl Responder {
-    let target = query.get("target").map(|v| v.as_str()).unwrap_or("title");
+    let target = query.get("target").cloned().unwrap_or_default();
     let keyword = query.get("keyword").cloned().unwrap_or_default();
-    let page: i64 = query.get("page").and_then(|v| v.parse().ok()).unwrap_or(1);
+    let page: usize = query.get("page").and_then(|v| v.parse().ok()).unwrap_or(1);
 
-    // 分词
-    let keywords: Vec<String> = keyword
-        .split_whitespace()
-        .map(|s| format!("%{}%", s))
-        .collect();
+    let searcher = data.reader.searcher();
+    let fields = match target.as_str() {
+        "title" => vec![data.title_field],
+        "content" => vec![data.content_field],
+        "both" => vec![data.title_field, data.content_field],
+        _ => return HttpResponse::BadRequest().body("invalid query"),
+    };
+    let query_parser = tantivy::query::QueryParser::for_index(&data.index, fields);
 
-    let conn = data.conn.lock().unwrap();
-
-    // 构建 WHERE 语句
-    let column_expr = match target {
-        "title" => "title",
-        "content" => "content",
-        "both" => "title || content",
-        _ => "title",
+    let query_obj = match query_parser.parse_query(&keyword) {
+        Ok(q) => q,
+        Err(_) => return HttpResponse::BadRequest().body("invalid query"),
     };
 
-    let mut where_clauses = Vec::new();
-    for _ in &keywords {
-        where_clauses.push(format!("{} LIKE ?", column_expr));
+    let top_docs = match searcher.search(
+        &query_obj,
+        &tantivy::collector::TopDocs::with_limit(PAGE_SIZE as usize)
+            .and_offset((page - 1) * PAGE_SIZE as usize),
+    ) {
+        Ok(r) => r,
+        Err(_) => return HttpResponse::InternalServerError().finish(),
+    };
+
+    let mut snippet_gen =
+        SnippetGenerator::create(&searcher, &query_obj, data.content_field).unwrap();
+    snippet_gen.set_max_num_chars(100);
+
+    let mut records = Vec::new();
+
+    for (_score, addr) in top_docs {
+        if let Ok(doc) = searcher.doc::<TantivyDocument>(addr) {
+            let tid_val = doc.get_first(data.tid_field).unwrap().as_u64().unwrap() as i64;
+            let title_val = doc
+                .get_first(data.title_field)
+                .unwrap()
+                .as_str()
+                .unwrap()
+                .to_string();
+
+            let snippet = snippet_gen.snippet_from_doc(&doc).to_html();
+            records.push(Record {
+                tid: tid_val,
+                title: title_val,
+                snippet,
+            });
+        }
     }
 
-    let where_sql = if where_clauses.is_empty() {
-        "1=1".to_string()
-    } else {
-        where_clauses.join(" AND ")
-    };
-
-    // 查询总数
-    let count_sql = format!("SELECT COUNT(*) FROM novels WHERE {}", where_sql);
-    let mut stmt = conn.prepare(&count_sql).unwrap();
-    let total: i64 = stmt
-        .query_row(rusqlite::params_from_iter(keywords.iter()), |row| {
-            row.get(0)
-        })
-        .unwrap();
-
-    // 分页 offset
-    let offset = (page - 1) * PAGE_SIZE;
-
-    // 查询记录
-    let sql = format!(
-        "SELECT tid, title, SUBSTR(content, 1, 500) FROM novels WHERE {} LIMIT ? OFFSET ?",
-        where_sql
-    );
-    let mut stmt = conn.prepare(&sql).unwrap();
-
-    let mut params_vec: Vec<&dyn rusqlite::ToSql> =
-        keywords.iter().map(|v| v as &dyn rusqlite::ToSql).collect();
-
-    params_vec.push(&PAGE_SIZE);
-    params_vec.push(&offset);
-
-    let params = rusqlite::params_from_iter(params_vec.into_iter());
-
-    let records = match stmt.query_map(params, |row| {
-        Ok(Novel {
-            tid: row.get(0)?,
-            title: row.get(1)?,
-            content: row.get(2)?,
-        })
-    }) {
-        Ok(mapped) => match mapped.collect::<Result<Vec<_>, _>>() {
-            Ok(vec) => vec,
-            Err(_) => return HttpResponse::InternalServerError().body("collect failed"),
-        },
-        Err(_) => return HttpResponse::InternalServerError().body("query failed"),
+    let total = match searcher.search(&query_obj, &tantivy::collector::Count) {
+        Ok(c) => c as i64,
+        _ => 0,
     };
 
     HttpResponse::Ok().json(PagedResult {
         total,
-        page,
+        page: page as i64,
         page_size: PAGE_SIZE,
         records,
     })
@@ -156,9 +156,19 @@ async fn main() -> std::io::Result<()> {
 ⠄⠄⠻⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣭⣶⡞⠄⠄⠄⠄
 ⠄⠄⠐⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡟⠄⠄⠄⠄⠄
 ⠄⠄⠄⠈⠻⣿⣿⣿⣿⣿⣿⣯⣿⣯⣿⣾⣿⣿⣿⣿⣿⡿⠋⠄⠄⠄⠄⠄⠄ 
+
+Server Start
 "#;
 
     println!("{}", art);
+
+    let index = tantivy::Index::open_in_dir("./tantivy_index").expect("idx open fail");
+    let schema = index.schema();
+    let reader = index.reader().unwrap();
+
+    let title_field = schema.get_field("title").unwrap();
+    let content_field = schema.get_field("content").unwrap();
+    let tid_field = schema.get_field("tid").unwrap();
 
     let server_url = "http://127.0.0.1:50721";
     let url_clone = server_url.to_string();
@@ -173,6 +183,12 @@ async fn main() -> std::io::Result<()> {
 
     let state = web::Data::new(AppState {
         conn: Mutex::new(conn),
+        index,
+        reader,
+        schema,
+        title_field,
+        content_field,
+        tid_field,
     });
 
     HttpServer::new(move || {

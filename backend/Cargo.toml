@@ -9,5 +9,7 @@ actix-files = "0.6.8"
 actix-web = "4"
 rusqlite = { version = "0.37.0", features = ["bundled"] }
 serde = "1.0.228"
+tantivy = "0.25.0"
+tantivy-jieba = "0.17.0"
 tokio = "1.48.0"
 webbrowser = "1.0.6"
