@@ -1,28 +1,41 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { nextTick, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { getNovel, type Novel } from '@/api/main';
 import Skeleton from 'primevue/skeleton';
 import { useToast } from 'primevue/usetoast';
+import { useEventListener } from '@vueuse/core'
 
 const toast = useToast();
 
 const route = useRoute()
 const data = ref<Novel>()
-const isLoading = ref(false)
+const isLoading = ref(true)
+const scrollKey = `scroll-${route.params.tid}`
+
+const saveScroll = () => {
+  if (!isLoading.value) {
+    localStorage.setItem(scrollKey, String(window.scrollY))
+  }
+}
+
+useEventListener(window, 'scroll', saveScroll)
 
 onMounted(async () => {
-  const tidParam = route.params.tid
-  const tid = Number(tidParam)
+  const tid = Number(route.params.tid)
 
   try {
-    isLoading.value = true
     data.value = await getNovel(tid)
   } catch (err: any) {
-  toast.add({ severity: 'error', summary: '错误', detail: '请求失败', life: 3000 });
+    toast.add({ severity: 'error', summary: '错误', detail: '请求失败', life: 3000 });
   } finally {
     isLoading.value = false
   }
+
+  await nextTick()
+
+  const savedY = Number(localStorage.getItem(scrollKey))
+  if (savedY) window.scrollTo({ top: savedY, behavior: 'smooth' })
 })
 </script>
 
