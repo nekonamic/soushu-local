@@ -53,8 +53,11 @@ async function search() {
   }
 }
 
-function goViewer(tid: number) {
-  router.push(`/${tid}`);
+function handleCardClick(event: MouseEvent, tid: number) {
+  if (event.button === 0) {
+    event.preventDefault();
+    router.push(`/${tid}`);
+  }
 }
 
 function onPageChange(event: { page: number }) {
@@ -106,15 +109,18 @@ function onPageChange(event: { page: number }) {
             v-for="_ in 10"></Skeleton>
         </div>
         <div class="grid md:grid-cols-2 grid-cols-1 gap-4" v-else>
-          <Card class="transition-colors duration-200 hover:bg-surface-100! dark:hover:bg-surface-800! cursor-pointer"
-            v-for="item in searchStore.records" :key="item.tid" @click="goViewer(item.tid)">
-            <template #title>
-              <p class="font-bold">{{ item.title }}</p>
-            </template>
-            <template #content>
-              <p class="m-0">{{ item.snippet }}</p>
-            </template>
-          </Card>
+          <a v-for="item in searchStore.records" :key="item.tid" :href="`/${item.tid}`"
+            @click="e => handleCardClick(e, item.tid)" class="block">
+            <Card
+              class="transition-colors duration-200 hover:bg-surface-100! dark:hover:bg-surface-800! cursor-pointer">
+              <template #title>
+                <p class="font-bold">{{ item.title }}</p>
+              </template>
+              <template #content>
+                <p class="m-0">{{ item.snippet }}</p>
+              </template>
+            </Card>
+          </a>
         </div>
         <div>
           <Paginator :rows=rows :totalRecords=searchStore.total v-model:first="offset" @page="onPageChange"
