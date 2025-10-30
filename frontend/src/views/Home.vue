@@ -107,24 +107,29 @@ function onPageChange(event: { page: number }) {
 
 <template>
   <div>
-    <Drawer v-model:visible="drawerVisible" header="收藏夹" position="left" :dismissable="true" class="w-full! md:w-80! lg:w-120!">
+    <Drawer v-model:visible="drawerVisible" header="收藏夹" position="left" :dismissable="true"
+      class="w-full! md:w-80! lg:w-120!">
       <div v-if="favs.length === 0" class="text-center text-gray-500 mt-4">
         暂无收藏
       </div>
       <div class="flex flex-col gap-4" v-else>
-        <Card class="transition-colors duration-200 hover:bg-surface-100! dark:hover:bg-surface-800! cursor-pointer"
-          v-for="item in favs" :key="item.tid" @click="goViewer(item.tid)">
-          <template #title>
-            <div class="flex justify-between">
-              <p class="font-bold mr-2">{{ item.title }}</p>
-              <i v-if="isFav(item.tid)" class="pi pi-star-fill" @click.stop="removeFav(item.tid)" style="color: purple; font-size: 1.5rem"></i>
-              <i v-else class="pi pi-star" @click.stop="addFav(item.tid, item.title)" style="color: violet; font-size: 1.5rem"></i>
-            </div>
-          </template>
-          <template #content>
-            <p class="m-0 text-sm text-gray-300">tid: {{ item.tid }}</p>
-          </template>
-        </Card>
+        <a v-for="item in favs" :key="item.tid" :href="`/${item.tid}`" @click="e => handleCardClick(e, item.tid)"
+          class="block">
+          <Card class="transition-colors duration-200 hover:bg-surface-100! dark:hover:bg-surface-800! cursor-pointer">
+            <template #title>
+              <div class="flex justify-between">
+                <p class="font-bold mr-2">{{ item.title }}</p>
+                <i v-if="isFav(item.tid)" class="pi pi-star-fill" @click.stop.prevent="removeFav(item.tid)"
+                  :style="{ color: 'var(--p-button-primary-background)', fontSize: '1.5rem' }"></i>
+                <i v-else class="pi pi-star" @click.stop.prevent="addFav(item.tid, item.title)"
+                  :style="{ color: 'var(--p-button-primary-background)', fontSize: '1.5rem' }"></i>
+              </div>
+            </template>
+            <template #content>
+              <p class="m-0 text-sm text-gray-300">tid: {{ item.tid }}</p>
+            </template>
+          </Card>
+        </a>
       </div>
     </Drawer>
     <div class=" flex flex-col items-center justify-center gap-4">
@@ -176,11 +181,14 @@ function onPageChange(event: { page: number }) {
             <Card
               class="transition-colors duration-200 hover:bg-surface-100! dark:hover:bg-surface-800! cursor-pointer">
               <template #title>
-              <div class="flex justify-between">
+                <div class="flex justify-between">
                   <p class="font-bold">{{ item.title }}</p>
-                <i v-if="isFav(item.tid)" class="pi pi-star-fill" @click.stop="removeFav(item.tid)" style="color: purple; font-size: 1.5rem"></i>
-                <i v-else class="pi pi-star" @click.stop="addFav(item.tid, item.title)" style="color: purple; font-size: 1.5rem"></i>
-              </div>
+                  <i v-if="isFav(item.tid)" class="pi pi-star-fill" @click.stop.prevent="removeFav(item.tid)"
+                    :style="{ color: 'var(--p-button-primary-background)', fontSize: '1.5rem' }"></i>
+                  <i v-else class="pi pi-star" @click.stop.prevent="addFav(item.tid, item.title)"
+                    :style="{ color: 'var(--p-button-primary-background)', fontSize: '1.5rem' }">
+                  </i>
+                </div>
               </template>
               <template #content>
                 <p class="m-0">{{ item.snippet }}</p>
