@@ -14,6 +14,9 @@ import Form from '@primevue/forms/form';
 import { useToast } from 'primevue/usetoast';
 import Drawer from 'primevue/drawer';
 import Button from 'primevue/button';
+import HomeTopBar from '@/components/HomeTopBar.vue';
+import type { Fav } from '@/types/Fav';
+import { useFavsStore } from '@/store/favs';
 
 
 const toast = useToast();
@@ -30,36 +33,31 @@ const offset = ref(0)
 
 const keyword = ref("")
 
-interface Fav {
-  tid: number
-  title: string
-}
+const favsStore = useFavsStore();
 
-const favs = ref<Fav[]>([])
-
-const isFav = (tid: number) => favs.value.some(f => f.tid === tid)
+const isFav = (tid: number) => favsStore.favs.some(f => f.tid === tid)
 
 const drawerVisible = ref(false)
 
 const addFav = (tid: number, title: string) => {
   const fav: Fav = { tid, title }
   if (!isFav(tid)) {
-    favs.value.push(fav)
+    favsStore.favs.push(fav)
     saveFavs()
   }
 }
 
 const removeFav = (tid: number) => {
-  favs.value = favs.value.filter(f => f.tid !== tid)
+  favsStore.favs = favsStore.favs.filter(f => f.tid !== tid)
   saveFavs()
 }
 const saveFavs = () => {
-  localStorage.setItem('favorites', JSON.stringify(favs.value))
+  localStorage.setItem('favorites', JSON.stringify(favsStore.favs))
 }
 
 onMounted(() => {
   const storedFavs = localStorage.getItem('favorites')
-  if (storedFavs) favs.value = JSON.parse(storedFavs)
+  if (storedFavs) favsStore.favs = JSON.parse(storedFavs)
   offset.value = (searchStore.page - 1) * rows.value;
 })
 
@@ -106,19 +104,20 @@ function onPageChange(event: { page: number }) {
 </script>
 
 <template>
-  <div>
+  <HomeTopBar />
+  <div class=" overflow-x-hidden">
     <Drawer v-model:visible="drawerVisible" header="收藏夹" position="left" :dismissable="true"
-      class="w-full! md:w-80! lg:w-120!">
-      <div v-if="favs.length === 0" class="text-center text-gray-500 mt-4">
+      class="w-full! md:w-80! lg:w-120! dark:bg-surface-700!">
+      <div v-if="favsStore.favs.length === 0" class="text-center text-gray-500 mt-4">
         暂无收藏
       </div>
       <div class="flex flex-col gap-4" v-else>
-        <a v-for="item in favs" :key="item.tid" :href="`/${item.tid}`" @click="e => handleCardClick(e, item.tid)"
+        <a v-for="item in favsStore.favs" :key="item.tid" :href="`/${item.tid}`" @click="e => handleCardClick(e, item.tid)"
           class="block">
-          <Card class="transition-colors duration-200 hover:bg-surface-100! dark:hover:bg-surface-800! cursor-pointer">
+          <Card class="transition-colors duration-200 hover:bg-surface-100! dark:hover:bg-surface-900! cursor-pointer">
             <template #title>
               <div class="flex justify-between">
-                <p class="font-bold mr-2">{{ item.title }}</p>
+                <p class="font-bold mr-2 wrap-break-word">{{ item.title }}</p>
                 <i v-if="isFav(item.tid)" class="pi pi-star-fill" @click.stop.prevent="removeFav(item.tid)"
                   :style="{ color: 'var(--p-button-primary-background)', fontSize: '1.5rem' }"></i>
                 <i v-else class="pi pi-star" @click.stop.prevent="addFav(item.tid, item.title)"
@@ -133,7 +132,7 @@ function onPageChange(event: { page: number }) {
       </div>
     </Drawer>
     <div class=" flex flex-col items-center justify-center gap-4">
-      <div class=" flex flex-col items-center justify-center md:mt-36 mt-16 md:mb-10 mb-4">
+      <div class=" flex flex-col items-center justify-center mt-40 md:mb-10 mb-4">
         <h1
           class=" text-5xl font-bold bg-linear-to-bl from-violet-500 to-fuchsia-500 inline-block text-transparent bg-clip-text p-1">
           搜书吧: 大図書館</h1>
@@ -145,7 +144,14 @@ function onPageChange(event: { page: number }) {
             <InputText v-model="searchStore.keyword" placeholder="搜索..." class=" w-full p-inputtext-lg" />
             <div class="flex justify-between">
               <div class="flex flex-col gap-2">
-                <Message size="small" severity="secondary" variant="simple">使用空格间隔关键词
+                <Message size="small" severity="secondary" variant="simple">
+                  <div class=" flex flex-row items-center gap-2">
+                    <p>支持使用布尔运算符</p>
+                    <a href="https://docs.rs/tantivy/latest/tantivy/query/struct.QueryParser.html" target="_blank"
+                      rel="noopener">
+                      <i class="pi pi-question-circle"></i>
+                    </a>
+                  </div>
                 </Message>
                 <div class="flex justify-between">
                   <RadioButtonGroup v-model="searchStore.target" name="ingredient" class="flex flex-wrap gap-4">
@@ -182,7 +188,7 @@ function onPageChange(event: { page: number }) {
               class="transition-colors duration-200 hover:bg-surface-100! dark:hover:bg-surface-800! cursor-pointer">
               <template #title>
                 <div class="flex justify-between">
-                  <p class="font-bold">{{ item.title }}</p>
+                  <p class="font-bold wrap-break-word">{{ item.title }}</p>
                   <i v-if="isFav(item.tid)" class="pi pi-star-fill" @click.stop.prevent="removeFav(item.tid)"
                     :style="{ color: 'var(--p-button-primary-background)', fontSize: '1.5rem' }"></i>
                   <i v-else class="pi pi-star" @click.stop.prevent="addFav(item.tid, item.title)"
@@ -191,14 +197,19 @@ function onPageChange(event: { page: number }) {
                 </div>
               </template>
               <template #content>
-                <p class="m-0">{{ item.snippet }}</p>
+                <p class="m-0 wrap-break-word">{{ item.snippet }}</p>
               </template>
             </Card>
           </a>
         </div>
         <div>
           <Paginator :rows=rows :totalRecords=searchStore.total v-model:first="offset" @page="onPageChange"
-            v-if="searchStore.total !== 0">
+            v-if="searchStore.total !== 0" :template="{
+              '640px': 'PrevPageLink CurrentPageReport NextPageLink',
+              '960px': 'FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink',
+              '1300px': 'FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink',
+              default: 'FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink JumpToPageDropdown JumpToPageInput'
+            }">
           </Paginator>
         </div>
       </div>
