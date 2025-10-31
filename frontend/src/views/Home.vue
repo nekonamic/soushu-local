@@ -117,7 +117,7 @@ function onPageChange(event: { page: number }) {
           <Card class="transition-colors duration-200 hover:bg-surface-100! dark:hover:bg-surface-900! cursor-pointer">
             <template #title>
               <div class="flex justify-between">
-                <p class="font-bold mr-2 wrap-break-word">{{ item.title }}</p>
+                <p class="font-bold mr-2 break-all">{{ item.title }}</p>
                 <i v-if="isFav(item.tid)" class="pi pi-star-fill" @click.stop.prevent="removeFav(item.tid)"
                   :style="{ color: 'var(--p-button-primary-background)', fontSize: '1.5rem' }"></i>
                 <i v-else class="pi pi-star" @click.stop.prevent="addFav(item.tid, item.title)"
@@ -188,7 +188,7 @@ function onPageChange(event: { page: number }) {
               class="transition-colors duration-200 hover:bg-surface-100! dark:hover:bg-surface-800! cursor-pointer">
               <template #title>
                 <div class="flex justify-between">
-                  <p class="font-bold wrap-break-word">{{ item.title }}</p>
+                  <p class="font-bold break-all">{{ item.title }}</p>
                   <i v-if="isFav(item.tid)" class="pi pi-star-fill" @click.stop.prevent="removeFav(item.tid)"
                     :style="{ color: 'var(--p-button-primary-background)', fontSize: '1.5rem' }"></i>
                   <i v-else class="pi pi-star" @click.stop.prevent="addFav(item.tid, item.title)"
@@ -197,7 +197,7 @@ function onPageChange(event: { page: number }) {
                 </div>
               </template>
               <template #content>
-                <p class="m-0 wrap-break-word">{{ item.snippet }}</p>
+                <p class="m-0 break-all">{{ item.snippet }}</p>
               </template>
             </Card>
           </a>
