@@ -31,8 +31,6 @@ const isLoading = ref(false)
 
 const offset = ref(0)
 
-const keyword = ref("")
-
 const favsStore = useFavsStore();
 
 const isFav = (tid: number) => favsStore.favs.some(f => f.tid === tid)
@@ -61,9 +59,8 @@ onMounted(() => {
   offset.value = (searchStore.page - 1) * rows.value;
 })
 
-async function search() {
-  if (keyword.value != searchStore.keyword.trim()) {
-    keyword.value = searchStore.keyword.trim();
+async function fetchData(isNewSearch: boolean) {
+  if (isNewSearch) {
     searchStore.records = [];
     searchStore.total = 0;
     searchStore.page = 1;
@@ -72,7 +69,7 @@ async function search() {
 
   try {
     isLoading.value = true;
-    const res = await searchNovels(searchStore.target, keyword.value, searchStore.page);
+    const res = await searchNovels(searchStore.target, searchStore.keyword, searchStore.page);
     searchStore.records = [];
     searchStore.records = res.records;
     searchStore.total = res.total;
@@ -98,7 +95,7 @@ function handleCardClick(event: MouseEvent, tid: number) {
 function onPageChange(event: { page: number }) {
   if (!isLoading.value) {
     searchStore.page = event.page + 1;
-    search();
+    fetchData(false);
   }
 }
 </script>
@@ -139,7 +136,7 @@ function onPageChange(event: { page: number }) {
         <h6 class=" text-gray-300 mt-2">搜书吧全文搜索(FTS)</h6>
       </div>
       <div class="w-full px-8 flex flex-col gap-4">
-        <Form @submit="search" class="flex justify-center flex-col gap-4">
+        <Form @submit="fetchData(true)" class="flex justify-center flex-col gap-4">
           <div class="flex flex-col gap-2">
             <InputText v-model="searchStore.keyword" placeholder="搜索..." class=" w-full p-inputtext-lg" />
             <div class="flex justify-between">
