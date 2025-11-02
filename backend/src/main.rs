@@ -8,6 +8,7 @@ use tantivy::{TantivyDocument};
 use tantivy::{schema::Value};
 use tantivy_jieba::JiebaTokenizer;
 use webbrowser;
+use actix_web::middleware::Compress;
 
 const PAGE_SIZE: i64 = 20;
 
@@ -199,6 +200,8 @@ Server Start
 
         App::new()
             .wrap(cors)
+            .wrap(Compress::default())
+            .wrap(actix_web::middleware::NormalizePath::trim())
             .app_data(state.clone())
             .route("/api/search", web::get().to(search))
             .route("/api/novel/{tid}", web::get().to(get_novel))
