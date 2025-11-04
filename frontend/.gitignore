@@ -34,3 +34,7 @@ coverage
 
 # Vitest
 __screenshots__/
+
+
+# PWA
+dev-dist/

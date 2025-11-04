@@ -17,9 +17,13 @@ import Button from 'primevue/button';
 import HomeTopBar from '@/components/HomeTopBar.vue';
 import type { Fav } from '@/types/Fav';
 import { useFavsStore } from '@/store/favs';
+import { useConfirm } from 'primevue/useconfirm';
+import { registerSW } from 'virtual:pwa-register';
 
 
 const toast = useToast();
+
+const confirm = useConfirm()
 
 const searchStore = useSearchStore();
 
@@ -54,6 +58,52 @@ const saveFavs = () => {
 }
 
 onMounted(() => {
+  const updateSW = registerSW({
+    immediate: true,
+
+    onNeedRefresh() {
+      confirm.require({
+        header: '更新可用',
+        message: '检测到新版本，是否立即刷新？',
+        icon: 'pi pi-refresh',
+        acceptProps: {
+          label: '立即更新'
+        },
+        rejectProps: {
+          label: '稍后',
+          severity: 'secondary',
+          outlined: true
+        },
+        accept: () => {
+          updateSW(true)
+          toast.add({
+            severity: 'info',
+            summary: '更新中',
+            detail: '正在刷新以加载最新版本…',
+            life: 3000
+          })
+        },
+        reject: () => {
+          toast.add({
+            severity: 'warn',
+            summary: '已取消',
+            detail: '稍后可手动刷新更新',
+            life: 3000
+          })
+        }
+      })
+    },
+
+    onOfflineReady() {
+      toast.add({
+        severity: 'success',
+        summary: '更新完成',
+        detail: '已准备好离线使用',
+        life: 4000
+      })
+    }
+  })
+
   const storedFavs = localStorage.getItem('favorites')
   if (storedFavs) favsStore.favs = JSON.parse(storedFavs)
   offset.value = (searchStore.page - 1) * rows.value;
