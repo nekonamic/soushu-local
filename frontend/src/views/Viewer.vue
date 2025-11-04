@@ -51,21 +51,23 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <ViewerTopBar />
   <div>
-    <div class=" flex justify-center mx-4 mt-20">
-      <div class=" w-3xl flex flex-col gap-2">
-        <div>
-          <Skeleton width="20rem" height="2rem" class="mb-2" v-if="novelStore.isLoading"></Skeleton>
-          <h1 class=" text-3xl font-bold break-all" v-else>{{ data?.title }}</h1>
-        </div>
-        <div>
-          <Skeleton width="10rem" class="mb-2" v-if="novelStore.isLoading"></Skeleton>
-          <p class="text-gray-300 text-sm" v-else>tid: {{ $route.params.tid }}</p>
-        </div>
-        <div>
-          <Skeleton width="100%" height="30rem" v-if="novelStore.isLoading"></Skeleton>
-          <p class=" text-lg font-light whitespace-pre-wrap break-all" v-else>{{ data?.content }}</p>
+    <div class="overflow-x-hidden">
+      <ViewerTopBar />
+      <div class=" flex justify-center mt-20 px-4">
+        <div class=" max-w-3xl w-full flex flex-col gap-2">
+          <div>
+            <Skeleton width="20rem" height="2rem" class="mb-2" v-if="novelStore.isLoading"></Skeleton>
+            <h1 class=" text-3xl font-bold break-all" v-else>{{ data?.title }}</h1>
+          </div>
+          <div>
+            <Skeleton width="10rem" class="mb-2" v-if="novelStore.isLoading"></Skeleton>
+            <p class="text-gray-300 text-sm" v-else>tid: {{ $route.params.tid }}</p>
+          </div>
+          <div>
+            <Skeleton width="100%" height="30rem" v-if="novelStore.isLoading"></Skeleton>
+            <p class=" text-lg font-light whitespace-pre-wrap break-all" v-else>{{ data?.content }}</p>
+          </div>
         </div>
       </div>
     </div>
