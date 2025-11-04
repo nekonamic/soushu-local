@@ -1,152 +1,160 @@
 <script setup lang="ts">
-import { useRouter } from 'vue-router'
-import { onMounted, ref } from 'vue';
-import InputText from 'primevue/inputtext';
-import RadioButton from 'primevue/radiobutton';
-import RadioButtonGroup from 'primevue/radiobuttongroup';
-import Card from 'primevue/card';
-import Paginator from 'primevue/paginator';
-import { searchNovels } from '@/api/main';
-import Skeleton from 'primevue/skeleton';
-import { useSearchStore } from '@/store/search';
-import Message from 'primevue/message';
-import Form from '@primevue/forms/form';
-import { useToast } from 'primevue/usetoast';
-import Drawer from 'primevue/drawer';
-import Button from 'primevue/button';
-import HomeTopBar from '@/components/HomeTopBar.vue';
-import type { Fav } from '@/types/Fav';
-import { useFavsStore } from '@/store/favs';
-import { useConfirm } from 'primevue/useconfirm';
-import { registerSW } from 'virtual:pwa-register';
-
+import { useRouter } from "vue-router";
+import { onMounted, ref } from "vue";
+import InputText from "primevue/inputtext";
+import RadioButton from "primevue/radiobutton";
+import RadioButtonGroup from "primevue/radiobuttongroup";
+import Card from "primevue/card";
+import Paginator from "primevue/paginator";
+import { searchNovels } from "@/api/main";
+import Skeleton from "primevue/skeleton";
+import { useSearchStore } from "@/store/search";
+import Message from "primevue/message";
+import Form from "@primevue/forms/form";
+import { useToast } from "primevue/usetoast";
+import Drawer from "primevue/drawer";
+import Button from "primevue/button";
+import HomeTopBar from "@/components/HomeTopBar.vue";
+import type { Fav } from "@/types/Fav";
+import { useFavsStore } from "@/store/favs";
+import { useConfirm } from "primevue/useconfirm";
+import { registerSW } from "virtual:pwa-register";
 
 const toast = useToast();
 
-const confirm = useConfirm()
+const confirm = useConfirm();
 
 const searchStore = useSearchStore();
 
-const router = useRouter()
+const router = useRouter();
 
 const rows = ref(20);
 
-const isLoading = ref(false)
+const isLoading = ref(false);
 
-const offset = ref(0)
+const offset = ref(0);
 
 const favsStore = useFavsStore();
 
-const isFav = (tid: number) => favsStore.favs.some(f => f.tid === tid)
+const isFav = (tid: number) => favsStore.favs.some((f) => f.tid === tid);
 
-const drawerVisible = ref(false)
+const drawerVisible = ref(false);
 
 const addFav = (tid: number, title: string) => {
-  const fav: Fav = { tid, title }
-  if (!isFav(tid)) {
-    favsStore.favs.push(fav)
-    saveFavs()
-  }
-}
+	const fav: Fav = { tid, title };
+	if (!isFav(tid)) {
+		favsStore.favs.push(fav);
+		saveFavs();
+	}
+};
 
 const removeFav = (tid: number) => {
-  favsStore.favs = favsStore.favs.filter(f => f.tid !== tid)
-  saveFavs()
-}
+	favsStore.favs = favsStore.favs.filter((f) => f.tid !== tid);
+	saveFavs();
+};
 const saveFavs = () => {
-  localStorage.setItem('favorites', JSON.stringify(favsStore.favs))
-}
+	localStorage.setItem("favorites", JSON.stringify(favsStore.favs));
+};
 
 onMounted(() => {
-  const updateSW = registerSW({
-    immediate: true,
+	const updateSW = registerSW({
+		immediate: true,
 
-    onNeedRefresh() {
-      confirm.require({
-        header: '更新可用',
-        message: '检测到新版本，是否立即刷新？',
-        icon: 'pi pi-refresh',
-        acceptProps: {
-          label: '立即更新'
-        },
-        rejectProps: {
-          label: '稍后',
-          severity: 'secondary',
-          outlined: true
-        },
-        accept: () => {
-          updateSW(true)
-          toast.add({
-            severity: 'info',
-            summary: '更新中',
-            detail: '正在刷新以加载最新版本…',
-            life: 3000
-          })
-        },
-        reject: () => {
-          toast.add({
-            severity: 'warn',
-            summary: '已取消',
-            detail: '稍后可手动刷新更新',
-            life: 3000
-          })
-        }
-      })
-    },
+		onNeedRefresh() {
+			confirm.require({
+				header: "更新可用",
+				message: "检测到新版本，是否立即刷新？",
+				icon: "pi pi-refresh",
+				acceptProps: {
+					label: "立即更新",
+				},
+				rejectProps: {
+					label: "稍后",
+					severity: "secondary",
+					outlined: true,
+				},
+				accept: () => {
+					updateSW(true);
+					toast.add({
+						severity: "info",
+						summary: "更新中",
+						detail: "正在刷新以加载最新版本…",
+						life: 3000,
+					});
+				},
+				reject: () => {
+					toast.add({
+						severity: "warn",
+						summary: "已取消",
+						detail: "稍后可手动刷新更新",
+						life: 3000,
+					});
+				},
+			});
+		},
 
-    onOfflineReady() {
-      toast.add({
-        severity: 'success',
-        summary: '更新完成',
-        detail: '已准备好离线使用',
-        life: 4000
-      })
-    }
-  })
+		onOfflineReady() {
+			toast.add({
+				severity: "success",
+				summary: "更新完成",
+				detail: "已准备好离线使用",
+				life: 4000,
+			});
+		},
+	});
 
-  const storedFavs = localStorage.getItem('favorites')
-  if (storedFavs) favsStore.favs = JSON.parse(storedFavs)
-  offset.value = (searchStore.page - 1) * rows.value;
-})
+	const storedFavs = localStorage.getItem("favorites");
+	if (storedFavs) favsStore.favs = JSON.parse(storedFavs);
+	offset.value = (searchStore.page - 1) * rows.value;
+});
 
 async function fetchData(isNewSearch: boolean) {
-  if (isNewSearch) {
-    searchStore.records = [];
-    searchStore.total = 0;
-    searchStore.page = 1;
-    offset.value = (searchStore.page - 1) * rows.value;
-  }
+	if (isNewSearch) {
+		searchStore.records = [];
+		searchStore.total = 0;
+		searchStore.page = 1;
+		offset.value = (searchStore.page - 1) * rows.value;
+	}
 
-  try {
-    isLoading.value = true;
-    const res = await searchNovels(searchStore.target, searchStore.keyword, searchStore.page);
-    searchStore.records = [];
-    searchStore.records = res.records;
-    searchStore.total = res.total;
-  } catch (err) {
-    toast.add({ severity: 'error', summary: '错误', detail: '搜索失败', life: 3000 });
-  } finally {
-    isLoading.value = false;
-  }
+	try {
+		isLoading.value = true;
+		const res = await searchNovels(
+			searchStore.target,
+			searchStore.keyword,
+			searchStore.page,
+		);
+		searchStore.records = [];
+		searchStore.records = res.records;
+		searchStore.total = res.total;
+	} catch (err) {
+		toast.add({
+			severity: "error",
+			summary: "错误",
+			detail: "搜索失败",
+			life: 3000,
+		});
+	} finally {
+		isLoading.value = false;
+	}
 
-  window.scrollTo({
-    top: 0,
-    behavior: 'smooth'
-  });
+	window.scrollTo({
+		top: 0,
+		behavior: "smooth",
+	});
 }
 
 function handleCardClick(event: MouseEvent, tid: number) {
-  if (event.button === 0) {
-    event.preventDefault();
-    router.push(`/${tid}`);
-  }
+	if (event.button === 0) {
+		event.preventDefault();
+		router.push(`/${tid}`);
+	}
 }
 
 function onPageChange(event: { page: number }) {
-  if (!isLoading.value) {
-    searchStore.page = event.page + 1;
-    fetchData(false);
-  }
+	if (!isLoading.value) {
+		searchStore.page = event.page + 1;
+		fetchData(false);
+	}
 }
 </script>
 

@@ -1,4 +1,4 @@
 export interface Fav {
-    tid: number
-    title: string
+	tid: number;
+	title: string;
 }

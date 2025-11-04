@@ -1,80 +1,84 @@
 <script setup lang="ts">
-import { useLayout } from '@/composables/useLayout';
-import { ref, onMounted, computed } from 'vue'
+import { useLayout } from "@/composables/useLayout";
+import { ref, onMounted, computed } from "vue";
 const { isDarkMode, toggleDarkMode, setColors } = useLayout();
-import { useEventListener } from '@vueuse/core'
-import { useFavsStore } from '@/store/favs';
-import { useNovelStore } from '@/store/novel';
-import type { Fav } from '@/types/Fav';
+import { useEventListener } from "@vueuse/core";
+import { useFavsStore } from "@/store/favs";
+import { useNovelStore } from "@/store/novel";
+import type { Fav } from "@/types/Fav";
 
 const novelStore = useNovelStore();
 
 const favsStore = useFavsStore();
 
-const isFav = computed(() => favsStore.favs.some(f => f.tid === novelStore.tid));
+const isFav = computed(() =>
+	favsStore.favs.some((f) => f.tid === novelStore.tid),
+);
 
 function toggleFav() {
-  isFav.value ? removeFav() : addFav();
+	isFav.value ? removeFav() : addFav();
 }
 
 const addFav = () => {
-  const fav: Fav = {
-    tid: novelStore.tid,
-    title: novelStore.title
-  }
-  if (!isFav.value) {
-    favsStore.favs.push(fav)
-    saveFavs()
-  }
-}
+	const fav: Fav = {
+		tid: novelStore.tid,
+		title: novelStore.title,
+	};
+	if (!isFav.value) {
+		favsStore.favs.push(fav);
+		saveFavs();
+	}
+};
 
 const removeFav = () => {
-  favsStore.favs = favsStore.favs.filter(f => f.tid !== novelStore.tid)
-  saveFavs()
-}
+	favsStore.favs = favsStore.favs.filter((f) => f.tid !== novelStore.tid);
+	saveFavs();
+};
 const saveFavs = () => {
-  localStorage.setItem('favorites', JSON.stringify(favsStore.favs))
-}
+	localStorage.setItem("favorites", JSON.stringify(favsStore.favs));
+};
 
 const handelScroll = () => {
-  updateProgress()
-}
+	updateProgress();
+};
 
-useEventListener(window, 'scroll', handelScroll)
+useEventListener(window, "scroll", handelScroll);
 
-const isHidden = ref(false)
-let lastScrollY = window.scrollY
+const isHidden = ref(false);
+let lastScrollY = window.scrollY;
 
 onMounted(() => {
-  setColors();
+	setColors();
 
-  const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+	const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
 
-  if (mediaQuery.matches && !isDarkMode.value) {
-    toggleDarkMode();
-  } else if (!mediaQuery.matches && isDarkMode.value) {
-    toggleDarkMode();
-  }
-})
+	if (mediaQuery.matches && !isDarkMode.value) {
+		toggleDarkMode();
+	} else if (!mediaQuery.matches && isDarkMode.value) {
+		toggleDarkMode();
+	}
+});
 
 const handleScroll = () => {
-  const currentScrollY = window.scrollY
-  if (currentScrollY > lastScrollY) {
-    isHidden.value = true
-  } else {
-    isHidden.value = false
-  }
-  lastScrollY = currentScrollY
-}
+	const currentScrollY = window.scrollY;
+	if (currentScrollY > lastScrollY) {
+		isHidden.value = true;
+	} else {
+		isHidden.value = false;
+	}
+	lastScrollY = currentScrollY;
+};
 
-useEventListener(window, 'scroll', handleScroll)
+useEventListener(window, "scroll", handleScroll);
 
-const scrollProgress = ref(0)
+const scrollProgress = ref(0);
 const updateProgress = () => {
-  const scrollTop = window.scrollY
-  const scrollHeight = document.documentElement.scrollHeight - window.innerHeight
-  scrollProgress.value = scrollHeight > 0 ? (scrollTop / scrollHeight) * 100 : 0
-}
+	const scrollTop = window.scrollY;
+	const scrollHeight =
+		document.documentElement.scrollHeight - window.innerHeight;
+	scrollProgress.value =
+		scrollHeight > 0 ? (scrollTop / scrollHeight) * 100 : 0;
+};
 </script>
 
 <template>

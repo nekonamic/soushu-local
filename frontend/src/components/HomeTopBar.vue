@@ -1,35 +1,35 @@
 <script setup lang="ts">
-import { useLayout } from '@/composables/useLayout';
-import { ref, onMounted } from 'vue'
+import { useLayout } from "@/composables/useLayout";
+import { ref, onMounted } from "vue";
 const { isDarkMode, toggleDarkMode, setColors } = useLayout();
-import { useEventListener } from '@vueuse/core'
+import { useEventListener } from "@vueuse/core";
 
-const isHidden = ref(false)
-let lastScrollY = window.scrollY
+const isHidden = ref(false);
+let lastScrollY = window.scrollY;
 
 onMounted(() => {
-  setColors();
+	setColors();
 
-  const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+	const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
 
-  if (mediaQuery.matches && !isDarkMode.value) {
-    toggleDarkMode();
-  } else if (!mediaQuery.matches && isDarkMode.value) {
-    toggleDarkMode();
-  }
-})
+	if (mediaQuery.matches && !isDarkMode.value) {
+		toggleDarkMode();
+	} else if (!mediaQuery.matches && isDarkMode.value) {
+		toggleDarkMode();
+	}
+});
 
 const handleScroll = () => {
-  const currentScrollY = window.scrollY
-  if (currentScrollY > lastScrollY) {
-    isHidden.value = true
-  } else {
-    isHidden.value = false
-  }
-  lastScrollY = currentScrollY
-}
+	const currentScrollY = window.scrollY;
+	if (currentScrollY > lastScrollY) {
+		isHidden.value = true;
+	} else {
+		isHidden.value = false;
+	}
+	lastScrollY = currentScrollY;
+};
 
-useEventListener(window, 'scroll', handleScroll)
+useEventListener(window, "scroll", handleScroll);
 </script>
 
 <template>

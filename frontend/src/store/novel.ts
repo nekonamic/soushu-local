@@ -1,9 +1,9 @@
-import { defineStore } from 'pinia';
+import { defineStore } from "pinia";
 
-export const useNovelStore = defineStore('novel', {
-  state: () => ({
-    tid: 0,
-    title: '',
-    isLoading: true,
-  }),
+export const useNovelStore = defineStore("novel", {
+	state: () => ({
+		tid: 0,
+		title: "",
+		isLoading: true,
+	}),
 });
