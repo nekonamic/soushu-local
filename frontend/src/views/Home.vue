@@ -19,6 +19,10 @@ import type { Fav } from "@/types/Fav";
 import { useFavsStore } from "@/store/favs";
 import { useConfirm } from "primevue/useconfirm";
 import { registerSW } from "virtual:pwa-register";
+import ProgressBar from 'primevue/progressbar';
+import { useProgressStore } from "@/store/progress";
+
+const progressStore = useProgressStore()
 
 const toast = useToast();
 
@@ -181,6 +185,7 @@ function onPageChange(event: { page: number }) {
             </template>
             <template #content>
               <p class="m-0 text-sm text-gray-300">tid: {{ item.tid }}</p>
+              <ProgressBar :value="progressStore.progress.find(p => p.tid === item.tid)?.progress ?? 0"></ProgressBar>
             </template>
           </Card>
         </a>

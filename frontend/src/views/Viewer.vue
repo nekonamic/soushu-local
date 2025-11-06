@@ -14,44 +14,55 @@ const toast = useToast();
 
 const route = useRoute();
 const data = ref<Novel>();
-const scrollKey = `scroll-${route.params.tid}`;
+const progressKey = `progress-${route.params.tid}`;
 
 const handelScroll = () => {
-	if (!novelStore.isLoading) {
-		localStorage.setItem(scrollKey, String(window.scrollY));
-	}
+  if (!novelStore.isLoading) {
+    const scrollTop = window.scrollY;
+    const scrollHeight =
+      document.documentElement.scrollHeight - window.innerHeight;
+      const progress =
+      scrollHeight > 0 ? (scrollTop / scrollHeight) * 100 : 0;
+    localStorage.setItem(progressKey, String(progress));
+  }
 };
 
 useEventListener(window, "scroll", handelScroll);
 
 onMounted(async () => {
-	const tid = Number(route.params.tid);
+  const tid = Number(route.params.tid);
 
-	try {
-		data.value = await getNovel(tid);
-		novelStore.tid = data.value.tid;
-		novelStore.title = data.value.title;
-	} catch (err: any) {
-		toast.add({
-			severity: "error",
-			summary: "错误",
-			detail: "请求失败",
-			life: 3000,
-		});
-	} finally {
-		novelStore.isLoading = false;
-	}
+  try {
+    data.value = await getNovel(tid);
+    novelStore.tid = data.value.tid;
+    novelStore.title = data.value.title;
+  } catch (err: any) {
+    toast.add({
+      severity: "error",
+      summary: "错误",
+      detail: "请求失败",
+      life: 3000,
+    });
+  } finally {
+    novelStore.isLoading = false;
+  }
 
-	await nextTick();
+  await nextTick();
 
-	const savedY = Number(localStorage.getItem(scrollKey));
-	if (savedY) window.scrollTo({ top: savedY, behavior: "smooth" });
+  const savedProgress = Number(localStorage.getItem(progressKey));
+  const doc = document.documentElement;
+  const scrollHeight = doc.scrollHeight - doc.clientHeight;
+  const targetScroll = (savedProgress / 100) * scrollHeight;
+  window.scrollTo({
+    top: targetScroll,
+    behavior: 'smooth',
+  });
 });
 
 onUnmounted(() => {
-	novelStore.tid = 0;
-	novelStore.title = "";
-	novelStore.isLoading = true;
+  novelStore.tid = 0;
+  novelStore.title = "";
+  novelStore.isLoading = true;
 });
 </script>
 

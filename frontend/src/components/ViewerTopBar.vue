@@ -1,88 +1,133 @@
 <script setup lang="ts">
 import { useLayout } from "@/composables/useLayout";
-import { ref, onMounted, computed } from "vue";
+import { ref, onMounted, computed, watch } from "vue";
 const { isDarkMode, toggleDarkMode, setColors } = useLayout();
 import { useEventListener } from "@vueuse/core";
 import { useFavsStore } from "@/store/favs";
 import { useNovelStore } from "@/store/novel";
 import type { Fav } from "@/types/Fav";
+import Slider from 'primevue/slider';
+import { useRoute } from "vue-router";
+import { useProgressStore } from "@/store/progress";
+
+const progressStore = useProgressStore()
+
+const route = useRoute();
+const tid = Number(route.params.tid);
+
+onMounted(() => {
+  setColors();
+
+  const storedProgress = localStorage.getItem("progress");
+  if (storedProgress) progressStore.progress = JSON.parse(storedProgress);
+
+  const index = progressStore.progress.findIndex(item => item.tid === tid)
+
+  if (index !== -1) {
+    slideValue.value = progressStore.progress[index]!.progress
+  }
+})
 
 const novelStore = useNovelStore();
 
 const favsStore = useFavsStore();
 
+const slideValue = ref(0)
+const isDragging = ref(false)
+
+const onSlideStart = () => {
+  isDragging.value = true
+}
+
+const onSlideEnd = () => {
+  isDragging.value = false
+}
+
 const isFav = computed(() =>
-	favsStore.favs.some((f) => f.tid === novelStore.tid),
+  favsStore.favs.some((f) => f.tid === novelStore.tid),
 );
 
 function toggleFav() {
-	isFav.value ? removeFav() : addFav();
+  isFav.value ? removeFav() : addFav();
 }
 
 const addFav = () => {
-	const fav: Fav = {
-		tid: novelStore.tid,
-		title: novelStore.title,
-	};
-	if (!isFav.value) {
-		favsStore.favs.push(fav);
-		saveFavs();
-	}
+  const fav: Fav = {
+    tid: novelStore.tid,
+    title: novelStore.title,
+  };
+  if (!isFav.value) {
+    favsStore.favs.push(fav);
+    saveFavs();
+  }
 };
 
 const removeFav = () => {
-	favsStore.favs = favsStore.favs.filter((f) => f.tid !== novelStore.tid);
-	saveFavs();
+  favsStore.favs = favsStore.favs.filter((f) => f.tid !== novelStore.tid);
+  saveFavs();
 };
 const saveFavs = () => {
-	localStorage.setItem("favorites", JSON.stringify(favsStore.favs));
+  localStorage.setItem("favorites", JSON.stringify(favsStore.favs));
 };
 
-const handelScroll = () => {
-	updateProgress();
-};
-
-useEventListener(window, "scroll", handelScroll);
 
 const isHidden = ref(false);
 let lastScrollY = window.scrollY;
 
-onMounted(() => {
-	setColors();
-
-	const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-
-	if (mediaQuery.matches && !isDarkMode.value) {
-		toggleDarkMode();
-	} else if (!mediaQuery.matches && isDarkMode.value) {
-		toggleDarkMode();
-	}
-});
-
 const handleScroll = () => {
-	const currentScrollY = window.scrollY;
-	if (currentScrollY > lastScrollY) {
-		isHidden.value = true;
-	} else {
-		isHidden.value = false;
-	}
-	lastScrollY = currentScrollY;
+  if (!isDragging.value) {
+    const currentScrollY = window.scrollY;
+    if (currentScrollY > lastScrollY) {
+      isHidden.value = true;
+    } else {
+      isHidden.value = false;
+    }
+    lastScrollY = currentScrollY;
+  }
 };
 
 useEventListener(window, "scroll", handleScroll);
 
-const scrollProgress = ref(0);
 const updateProgress = () => {
-	const scrollTop = window.scrollY;
-	const scrollHeight =
-		document.documentElement.scrollHeight - window.innerHeight;
-	scrollProgress.value =
-		scrollHeight > 0 ? (scrollTop / scrollHeight) * 100 : 0;
+  const scrollTop = window.scrollY;
+  const scrollHeight =
+    document.documentElement.scrollHeight - window.innerHeight;
+  const progress =
+    scrollHeight > 0 ? (scrollTop / scrollHeight) * 100 : 0;
+
+  if (!isDragging.value) {
+    slideValue.value = progress
+  }
+
+  const index = progressStore.progress.findIndex(item => item.tid === tid)
+
+  if (index !== -1) {
+    progressStore.progress[index]!.progress = progress
+  } else {
+    progressStore.progress.push({ tid, progress })
+  }
+  localStorage.setItem("progress", JSON.stringify(progressStore.progress));
 };
+
+useEventListener(window, "scroll", updateProgress);
+
+watch(slideValue, (val) => {
+  if (isDragging.value) {
+    const doc = document.documentElement;
+    const scrollHeight = doc.scrollHeight - doc.clientHeight;
+    const targetScroll = (val / 100) * scrollHeight;
+    window.scrollTo({
+      top: targetScroll,
+      behavior: 'smooth',
+    });
+
+  }
+});
 </script>
 
 <template>
-  <div :class="['fixed top-0 left-0 w-full transition-transform duration-300', isHidden ? 'translate-y-[calc(-100%+0.25rem)]' : 'translate-y-0']">
+  <div
+    :class="['fixed top-0 left-0 w-full transition-transform duration-300', isHidden ? 'translate-y-[calc(-100%+0.25rem)]' : 'translate-y-0']">
     <div
       :class="['flex flex-row items-center justify-between p-4', 'bg-white/30 dark:bg-gray-900/30 backdrop-blur-md', 'border-b border-gray-300/50 dark:border-gray-700/50', 'z-50']">
       <button type="button"
@@ -96,10 +141,7 @@ const updateProgress = () => {
         <i :class="['pi text-base', { 'pi-moon': isDarkMode, 'pi-sun': !isDarkMode }]" />
       </button>
     </div>
-    <div class="w-full h-1 bg-gray-200 z-50">
-      <div class="h-1 bg-linear-to-bl from-violet-500 to-fuchsia-500 transition-all duration-100"
-        :style="{ width: scrollProgress + '%' }"></div>
-    </div>
+    <Slider v-model="slideValue" @change="onSlideStart" @slideend="onSlideEnd" />
   </div>
 </template>
 
