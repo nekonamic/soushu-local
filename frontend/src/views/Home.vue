@@ -107,6 +107,9 @@ onMounted(() => {
 		},
 	});
 
+  const storedProgress = localStorage.getItem("progress");
+  if (storedProgress) progressStore.progress = JSON.parse(storedProgress);
+
 	const storedFavs = localStorage.getItem("favorites");
 	if (storedFavs) favsStore.favs = JSON.parse(storedFavs);
 	offset.value = (searchStore.page - 1) * rows.value;
@@ -166,7 +169,7 @@ function onPageChange(event: { page: number }) {
   <div>
     <HomeTopBar />
     <Drawer v-model:visible="drawerVisible" header="收藏夹" position="left" :dismissable="true"
-      class="w-full! md:w-80! lg:w-120! dark:bg-surface-700!">
+      class="w-full! md:w-80! lg:w-120! bg-surface-50 dark:bg-surface-700!">
       <div v-if="favsStore.favs.length === 0" class="text-center text-gray-500 mt-4">
         暂无收藏
       </div>
@@ -184,8 +187,7 @@ function onPageChange(event: { page: number }) {
               </div>
             </template>
             <template #content>
-              <p class="m-0 text-sm text-gray-300">tid: {{ item.tid }}</p>
-              <ProgressBar :value="progressStore.progress.find(p => p.tid === item.tid)?.progress ?? 0"></ProgressBar>
+              <ProgressBar :value="progressStore.progress.find(p => p.tid === item.tid)?.progress ?? 0" :showValue="false" />
             </template>
           </Card>
         </a>

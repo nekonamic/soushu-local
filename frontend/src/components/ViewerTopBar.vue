@@ -18,9 +18,6 @@ const tid = Number(route.params.tid);
 onMounted(() => {
   setColors();
 
-  const storedProgress = localStorage.getItem("progress");
-  if (storedProgress) progressStore.progress = JSON.parse(storedProgress);
-
   const index = progressStore.progress.findIndex(item => item.tid === tid)
 
   if (index !== -1) {
