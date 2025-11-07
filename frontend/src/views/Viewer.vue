@@ -4,9 +4,12 @@ import { useRoute } from "vue-router";
 import { getNovel, type Novel } from "@/api/main";
 import Skeleton from "primevue/skeleton";
 import { useToast } from "primevue/usetoast";
-import { useEventListener } from "@vueuse/core";
 import ViewerTopBar from "@/components/ViewerTopBar.vue";
 import { useNovelStore } from "@/store/novel";
+import { useLocalStorage } from "@vueuse/core";
+import type { Progress } from "@/types/Progress";
+
+const progressStore = useLocalStorage<Progress[]>('progress', [])
 
 const novelStore = useNovelStore();
 
@@ -14,20 +17,6 @@ const toast = useToast();
 
 const route = useRoute();
 const data = ref<Novel>();
-const progressKey = `progress-${route.params.tid}`;
-
-const handelScroll = () => {
-  if (!novelStore.isLoading) {
-    const scrollTop = window.scrollY;
-    const scrollHeight =
-      document.documentElement.scrollHeight - window.innerHeight;
-      const progress =
-      scrollHeight > 0 ? (scrollTop / scrollHeight) * 100 : 0;
-    localStorage.setItem(progressKey, String(progress));
-  }
-};
-
-useEventListener(window, "scroll", handelScroll);
 
 onMounted(async () => {
   const tid = Number(route.params.tid);
@@ -49,14 +38,17 @@ onMounted(async () => {
 
   await nextTick();
 
-  const savedProgress = Number(localStorage.getItem(progressKey));
-  const doc = document.documentElement;
-  const scrollHeight = doc.scrollHeight - doc.clientHeight;
-  const targetScroll = (savedProgress / 100) * scrollHeight;
-  window.scrollTo({
-    top: targetScroll,
-    behavior: 'smooth',
-  });
+  const index = progressStore.value.findIndex(item => item.tid === tid)
+
+  if (index !== -1) {
+    const doc = document.documentElement;
+    const scrollHeight = doc.scrollHeight - doc.clientHeight;
+    const targetScroll = (progressStore.value[index]!.progress / 100) * scrollHeight;
+    window.scrollTo({
+      top: targetScroll,
+      behavior: 'smooth',
+    });
+  }
 });
 
 onUnmounted(() => {

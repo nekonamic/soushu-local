@@ -16,13 +16,16 @@ import Drawer from "primevue/drawer";
 import Button from "primevue/button";
 import HomeTopBar from "@/components/HomeTopBar.vue";
 import type { Fav } from "@/types/Fav";
-import { useFavsStore } from "@/store/favs";
 import { useConfirm } from "primevue/useconfirm";
 import { registerSW } from "virtual:pwa-register";
 import ProgressBar from 'primevue/progressbar';
-import { useProgressStore } from "@/store/progress";
+import { useLocalStorage } from "@vueuse/core";
+import type { Progress } from "@/types/Progress";
+import AutoComplete from "primevue/autoComplete";
 
-const progressStore = useProgressStore()
+const favorites = useLocalStorage<Fav[]>('favorites', [])
+const progress = useLocalStorage<Progress[]>('progress', [])
+const history = useLocalStorage<string[]>('history', [])
 
 const toast = useToast();
 
@@ -38,26 +41,19 @@ const isLoading = ref(false);
 
 const offset = ref(0);
 
-const favsStore = useFavsStore();
-
-const isFav = (tid: number) => favsStore.favs.some((f) => f.tid === tid);
+const isFav = (tid: number) => favorites.value.some((f) => f.tid === tid);
 
 const drawerVisible = ref(false);
 
 const addFav = (tid: number, title: string) => {
   const fav: Fav = { tid, title };
   if (!isFav(tid)) {
-    favsStore.favs.push(fav);
-    saveFavs();
+    favorites.value.push(fav);
   }
 };
 
 const removeFav = (tid: number) => {
-  favsStore.favs = favsStore.favs.filter((f) => f.tid !== tid);
-  saveFavs();
-};
-const saveFavs = () => {
-  localStorage.setItem("favorites", JSON.stringify(favsStore.favs));
+  favorites.value = favorites.value.filter((f) => f.tid !== tid);
 };
 
 onMounted(() => {
@@ -107,16 +103,18 @@ onMounted(() => {
     },
   });
 
-  const storedProgress = localStorage.getItem("progress");
-  if (storedProgress) progressStore.progress = JSON.parse(storedProgress);
-
-  const storedFavs = localStorage.getItem("favorites");
-  if (storedFavs) favsStore.favs = JSON.parse(storedFavs);
   offset.value = (searchStore.page - 1) * rows.value;
 });
 
 async function fetchData(isNewSearch: boolean) {
   if (isNewSearch) {
+    if (!history.value.includes(searchStore.keyword)) {
+      history.value.unshift(searchStore.keyword);
+    }
+    if (history.value.length > 20) {
+      history.value = history.value.slice(0, 20);
+    }
+
     searchStore.records = [];
     searchStore.total = 0;
     searchStore.page = 1;
@@ -170,12 +168,12 @@ function onPageChange(event: { page: number }) {
     <HomeTopBar />
     <Drawer v-model:visible="drawerVisible" header="收藏夹" position="left" :dismissable="true"
       class="w-full! md:w-80! lg:w-120! bg-surface-50! dark:bg-surface-700!">
-      <div v-if="favsStore.favs.length === 0" class="text-center text-gray-500 mt-4">
+      <div v-if="favorites.length === 0" class="text-center text-gray-500 mt-4">
         暂无收藏
       </div>
       <div class="flex flex-col gap-4" v-else>
-        <a v-for="item in favsStore.favs" :key="item.tid" :href="`/${item.tid}`"
-          @click="e => handleCardClick(e, item.tid)" class="block">
+        <a v-for="item in favorites" :key="item.tid" :href="`/${item.tid}`" @click="e => handleCardClick(e, item.tid)"
+          class="block">
           <Card class="transition-colors duration-200 hover:bg-surface-100! dark:hover:bg-surface-900! cursor-pointer">
             <template #title>
               <div class="flex justify-between">
@@ -187,7 +185,7 @@ function onPageChange(event: { page: number }) {
               </div>
             </template>
             <template #content>
-              <ProgressBar :value="Math.floor(progressStore.progress.find(p => p.tid === item.tid)?.progress ?? 0)" />
+              <ProgressBar :value="Math.floor(progress.find(p => p.tid === item.tid)?.progress ?? 0)" />
             </template>
           </Card>
         </a>
@@ -204,7 +202,8 @@ function onPageChange(event: { page: number }) {
         <div class=" max-w-7xl w-full px-8 flex flex-col gap-4">
           <Form @submit="fetchData(true)" class="flex justify-center flex-col gap-4">
             <div class="flex flex-col gap-2">
-              <InputText v-model="searchStore.keyword" placeholder="搜索..." class=" w-full p-inputtext-lg" />
+              <AutoComplete v-model="searchStore.keyword" placeholder="搜索..."
+                :inputStyle="{ width: '100%', fontSize: '16px' }" :suggestions="history" :completeOnFocus="true" />
               <div class="flex justify-between">
                 <div class="flex flex-col gap-2">
                   <Message size="small" severity="secondary" variant="simple">

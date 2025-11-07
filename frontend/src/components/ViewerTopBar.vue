@@ -3,14 +3,15 @@ import { useLayout } from "@/composables/useLayout";
 import { ref, onMounted, computed, watch } from "vue";
 const { isDarkMode, toggleDarkMode, setColors } = useLayout();
 import { useEventListener } from "@vueuse/core";
-import { useFavsStore } from "@/store/favs";
 import { useNovelStore } from "@/store/novel";
 import type { Fav } from "@/types/Fav";
 import Slider from 'primevue/slider';
 import { useRoute } from "vue-router";
-import { useProgressStore } from "@/store/progress";
+import { useLocalStorage } from "@vueuse/core";
+import type { Progress } from "@/types/Progress";
 
-const progressStore = useProgressStore()
+const favorites = useLocalStorage<Fav[]>('favorites', [])
+const progressStore = useLocalStorage<Progress[]>('progress', [])
 
 const route = useRoute();
 const tid = Number(route.params.tid);
@@ -18,16 +19,14 @@ const tid = Number(route.params.tid);
 onMounted(() => {
   setColors();
 
-  const index = progressStore.progress.findIndex(item => item.tid === tid)
+  const index = progressStore.value.findIndex(item => item.tid === tid)
 
   if (index !== -1) {
-    slideValue.value = progressStore.progress[index]!.progress
+    slideValue.value = progressStore.value[index]!.progress
   }
 })
 
 const novelStore = useNovelStore();
-
-const favsStore = useFavsStore();
 
 const slideValue = ref(0)
 const isDragging = ref(false)
@@ -41,7 +40,7 @@ const onSlideEnd = () => {
 }
 
 const isFav = computed(() =>
-  favsStore.favs.some((f) => f.tid === novelStore.tid),
+  favorites.value.some((f) => f.tid === novelStore.tid),
 );
 
 function toggleFav() {
@@ -54,17 +53,12 @@ const addFav = () => {
     title: novelStore.title,
   };
   if (!isFav.value) {
-    favsStore.favs.push(fav);
-    saveFavs();
+    favorites.value.push(fav);
   }
 };
 
 const removeFav = () => {
-  favsStore.favs = favsStore.favs.filter((f) => f.tid !== novelStore.tid);
-  saveFavs();
-};
-const saveFavs = () => {
-  localStorage.setItem("favorites", JSON.stringify(favsStore.favs));
+  favorites.value = favorites.value.filter((f) => f.tid !== novelStore.tid);
 };
 
 
@@ -91,19 +85,18 @@ const updateProgress = () => {
     document.documentElement.scrollHeight - window.innerHeight;
   const progress =
     scrollHeight > 0 ? (scrollTop / scrollHeight) * 100 : 0;
-
+  
   if (!isDragging.value) {
     slideValue.value = progress
   }
 
-  const index = progressStore.progress.findIndex(item => item.tid === tid)
+  const index = progressStore.value.findIndex(item => item.tid === tid)
 
   if (index !== -1) {
-    progressStore.progress[index]!.progress = progress
+    progressStore.value[index]!.progress = progress
   } else {
-    progressStore.progress.push({ tid, progress })
+    progressStore.value.push({ tid, progress })
   }
-  localStorage.setItem("progress", JSON.stringify(progressStore.progress));
 };
 
 useEventListener(window, "scroll", updateProgress);
