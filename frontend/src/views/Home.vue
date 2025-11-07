@@ -45,123 +45,123 @@ const isFav = (tid: number) => favsStore.favs.some((f) => f.tid === tid);
 const drawerVisible = ref(false);
 
 const addFav = (tid: number, title: string) => {
-	const fav: Fav = { tid, title };
-	if (!isFav(tid)) {
-		favsStore.favs.push(fav);
-		saveFavs();
-	}
+  const fav: Fav = { tid, title };
+  if (!isFav(tid)) {
+    favsStore.favs.push(fav);
+    saveFavs();
+  }
 };
 
 const removeFav = (tid: number) => {
-	favsStore.favs = favsStore.favs.filter((f) => f.tid !== tid);
-	saveFavs();
+  favsStore.favs = favsStore.favs.filter((f) => f.tid !== tid);
+  saveFavs();
 };
 const saveFavs = () => {
-	localStorage.setItem("favorites", JSON.stringify(favsStore.favs));
+  localStorage.setItem("favorites", JSON.stringify(favsStore.favs));
 };
 
 onMounted(() => {
-	const updateSW = registerSW({
-		immediate: true,
+  const updateSW = registerSW({
+    immediate: true,
 
-		onNeedRefresh() {
-			confirm.require({
-				header: "更新可用",
-				message: "检测到新版本，是否立即刷新？",
-				icon: "pi pi-refresh",
-				acceptProps: {
-					label: "立即更新",
-				},
-				rejectProps: {
-					label: "稍后",
-					severity: "secondary",
-					outlined: true,
-				},
-				accept: () => {
-					updateSW(true);
-					toast.add({
-						severity: "info",
-						summary: "更新中",
-						detail: "正在刷新以加载最新版本…",
-						life: 3000,
-					});
-				},
-				reject: () => {
-					toast.add({
-						severity: "warn",
-						summary: "已取消",
-						detail: "稍后可手动刷新更新",
-						life: 3000,
-					});
-				},
-			});
-		},
+    onNeedRefresh() {
+      confirm.require({
+        header: "更新可用",
+        message: "检测到新版本，是否立即刷新？",
+        icon: "pi pi-refresh",
+        acceptProps: {
+          label: "立即更新",
+        },
+        rejectProps: {
+          label: "稍后",
+          severity: "secondary",
+          outlined: true,
+        },
+        accept: () => {
+          updateSW(true);
+          toast.add({
+            severity: "info",
+            summary: "更新中",
+            detail: "正在刷新以加载最新版本…",
+            life: 3000,
+          });
+        },
+        reject: () => {
+          toast.add({
+            severity: "warn",
+            summary: "已取消",
+            detail: "稍后可手动刷新更新",
+            life: 3000,
+          });
+        },
+      });
+    },
 
-		onOfflineReady() {
-			toast.add({
-				severity: "success",
-				summary: "更新完成",
-				detail: "已准备好离线使用",
-				life: 4000,
-			});
-		},
-	});
+    onOfflineReady() {
+      toast.add({
+        severity: "success",
+        summary: "更新完成",
+        detail: "已准备好离线使用",
+        life: 4000,
+      });
+    },
+  });
 
   const storedProgress = localStorage.getItem("progress");
   if (storedProgress) progressStore.progress = JSON.parse(storedProgress);
 
-	const storedFavs = localStorage.getItem("favorites");
-	if (storedFavs) favsStore.favs = JSON.parse(storedFavs);
-	offset.value = (searchStore.page - 1) * rows.value;
+  const storedFavs = localStorage.getItem("favorites");
+  if (storedFavs) favsStore.favs = JSON.parse(storedFavs);
+  offset.value = (searchStore.page - 1) * rows.value;
 });
 
 async function fetchData(isNewSearch: boolean) {
-	if (isNewSearch) {
-		searchStore.records = [];
-		searchStore.total = 0;
-		searchStore.page = 1;
-		offset.value = (searchStore.page - 1) * rows.value;
-	}
+  if (isNewSearch) {
+    searchStore.records = [];
+    searchStore.total = 0;
+    searchStore.page = 1;
+    offset.value = (searchStore.page - 1) * rows.value;
+  }
 
-	try {
-		isLoading.value = true;
-		const res = await searchNovels(
-			searchStore.target,
-			searchStore.keyword,
-			searchStore.page,
-		);
-		searchStore.records = [];
-		searchStore.records = res.records;
-		searchStore.total = res.total;
-	} catch (err) {
-		toast.add({
-			severity: "error",
-			summary: "错误",
-			detail: "搜索失败",
-			life: 3000,
-		});
-	} finally {
-		isLoading.value = false;
-	}
+  try {
+    isLoading.value = true;
+    const res = await searchNovels(
+      searchStore.target,
+      searchStore.keyword,
+      searchStore.page,
+    );
+    searchStore.records = [];
+    searchStore.records = res.records;
+    searchStore.total = res.total;
+  } catch (err) {
+    toast.add({
+      severity: "error",
+      summary: "错误",
+      detail: "搜索失败",
+      life: 3000,
+    });
+  } finally {
+    isLoading.value = false;
+  }
 
-	window.scrollTo({
-		top: 0,
-		behavior: "smooth",
-	});
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth",
+  });
 }
 
 function handleCardClick(event: MouseEvent, tid: number) {
-	if (event.button === 0) {
-		event.preventDefault();
-		router.push(`/${tid}`);
-	}
+  if (event.button === 0) {
+    event.preventDefault();
+    router.push(`/${tid}`);
+  }
 }
 
 function onPageChange(event: { page: number }) {
-	if (!isLoading.value) {
-		searchStore.page = event.page + 1;
-		fetchData(false);
-	}
+  if (!isLoading.value) {
+    searchStore.page = event.page + 1;
+    fetchData(false);
+  }
 }
 </script>
 
@@ -169,7 +169,7 @@ function onPageChange(event: { page: number }) {
   <div>
     <HomeTopBar />
     <Drawer v-model:visible="drawerVisible" header="收藏夹" position="left" :dismissable="true"
-      class="w-full! md:w-80! lg:w-120! bg-surface-50 dark:bg-surface-700!">
+      class="w-full! md:w-80! lg:w-120! bg-surface-50! dark:bg-surface-700!">
       <div v-if="favsStore.favs.length === 0" class="text-center text-gray-500 mt-4">
         暂无收藏
       </div>
@@ -187,7 +187,7 @@ function onPageChange(event: { page: number }) {
               </div>
             </template>
             <template #content>
-              <ProgressBar :value="progressStore.progress.find(p => p.tid === item.tid)?.progress ?? 0" :showValue="false" />
+              <ProgressBar :value="Math.floor(progressStore.progress.find(p => p.tid === item.tid)?.progress ?? 0)" />
             </template>
           </Card>
         </a>
@@ -201,7 +201,7 @@ function onPageChange(event: { page: number }) {
             搜书吧: 大図書館</h1>
           <h6 class=" text-gray-300 mt-2">搜书吧全文搜索(FTS)</h6>
         </div>
-        <div class="w-full px-8 flex flex-col gap-4">
+        <div class=" max-w-7xl w-full px-8 flex flex-col gap-4">
           <Form @submit="fetchData(true)" class="flex justify-center flex-col gap-4">
             <div class="flex flex-col gap-2">
               <InputText v-model="searchStore.keyword" placeholder="搜索..." class=" w-full p-inputtext-lg" />
@@ -209,11 +209,10 @@ function onPageChange(event: { page: number }) {
                 <div class="flex flex-col gap-2">
                   <Message size="small" severity="secondary" variant="simple">
                     <div class=" flex flex-row items-center gap-2">
-                      <p>支持使用布尔运算符</p>
-                      <a href="https://docs.rs/tantivy/latest/tantivy/query/struct.QueryParser.html" target="_blank"
-                        rel="noopener">
+                      <p>搜索指南</p>
+                      <router-link to="/doc">
                         <i class="pi pi-question-circle"></i>
-                      </a>
+                      </router-link>
                     </div>
                   </Message>
                   <div class="flex justify-between">
@@ -244,23 +243,22 @@ function onPageChange(event: { page: number }) {
               class="transition-colors duration-200 hover:bg-surface-100! dark:hover:bg-surface-800! cursor-pointer"
               v-for="_ in 10"></Skeleton>
           </div>
-          <div class="grid md:grid-cols-2 grid-cols-1 gap-4" v-else>
+          <div class="columns-1 sm:columns-2 md:columns-3 gap-4" v-else>
             <a v-for="item in searchStore.records" :key="item.tid" :href="`/${item.tid}`"
-              @click="e => handleCardClick(e, item.tid)" class="block">
+              @click="e => handleCardClick(e, item.tid)" class="block mb-4 break-inside-avoid">
               <Card
                 class="transition-colors duration-200 hover:bg-surface-100! dark:hover:bg-surface-800! cursor-pointer">
                 <template #title>
                   <div class="flex justify-between">
-                    <p class="font-bold break-all">{{ item.title }}</p>
+                    <p class="font-bold break-all mr-2">{{ item.title }}</p>
                     <i v-if="isFav(item.tid)" class="pi pi-star-fill" @click.stop.prevent="removeFav(item.tid)"
                       :style="{ color: 'var(--p-button-primary-background)', fontSize: '1.5rem' }"></i>
                     <i v-else class="pi pi-star" @click.stop.prevent="addFav(item.tid, item.title)"
-                      :style="{ color: 'var(--p-button-primary-background)', fontSize: '1.5rem' }">
-                    </i>
+                      :style="{ color: 'var(--p-button-primary-background)', fontSize: '1.5rem' }"></i>
                   </div>
                 </template>
                 <template #content>
-                  <p class="m-0 break-all">{{ item.snippet }}</p>
+                  <p class="m-0 text-sm text-gray-500">字数: {{ item.count.toLocaleString() }}字</p>
                 </template>
               </Card>
             </a>

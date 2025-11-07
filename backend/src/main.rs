@@ -23,7 +23,7 @@ struct Novel {
 struct Record {
     tid: i64,
     title: String,
-    snippet: String,
+    count: u64,
 }
 
 #[derive(Serialize)]
@@ -84,14 +84,14 @@ async fn search(
             let title_val = doc.get_first(data.title_field).unwrap().as_str().unwrap().to_string();
 
             let mut stmt = conn
-                .prepare("SELECT substr(content, 1, 100) FROM novels WHERE tid=?1")
+                .prepare("SELECT LENGTH(content) AS count FROM novels WHERE tid=?1")
                 .unwrap();
 
-            if let Ok(snippet) = stmt.query_row([tid_val], |row| row.get::<usize, String>(0)) {
+            if let Ok(count) = stmt.query_row([tid_val], |row| row.get::<usize, u64>(0)) {
                 records.push(Record {
                     tid: tid_val,
                     title: title_val,
-                    snippet,
+                    count,
                 });
             }
         }
@@ -143,6 +143,8 @@ async fn spa_index(_req: HttpRequest) -> Result<NamedFile> {
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
     let art = r#"
+#############################
+
 ⠄⠄⢰⣿⠿⠄⡀⠄⠄⠄⠘⣷⡀⠄⠢⣄⠄⠄⠄⠄⠄⠄⠄⣠⠖⠁⠄⠄⠄
 ⠄⣤⢸⣿⣿⣆⠣⠄⠄⠄⠄⠸⣿⣦⡀⠙⢶⣦⣄⡀⠄⡠⠞⠁⢀⡴⠄⠄⠄
 ⢰⣿⣎⣿⣿⣿⣦⣀⠄⠄⠄⠄⠹⣿⣿⣦⢄⡙⠻⠿⠷⠶⠤⢐⣋⣀⠄⠄⠄
@@ -153,16 +155,18 @@ async fn main() -> std::io::Result<()> {
 ⠄⠰⣭⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠁⡀⠄⠄⠄
 ⠄⠄⠻⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣭⣶⡞⠄⠄⠄⠄
 ⠄⠄⠐⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡟⠄⠄⠄⠄⠄
-⠄⠄⠄⠈⠻⣿⣿⣿⣿⣿⣿⣯⣿⣯⣿⣾⣿⣿⣿⣿⣿⡿⠋⠄⠄⠄⠄⠄⠄ 
+⠄⠄⠄⠈⠻⣿⣿⣿⣿⣿⣿⣯⣿⣯⣿⣾⣿⣿⣿⣿⣿⡿⠋⠄⠄⠄⠄⠄⠄
 
-Server Start
+#############################
 "#;
 
     println!("{}", art);
 
     let jieba_tokenizer = JiebaTokenizer {};
 
+    print!("加载分词数据...");
     let index = tantivy::Index::open_in_dir("./index").expect("idx open fail");
+    print!("分词数据加载完成");
     index.tokenizers().register("jieba", jieba_tokenizer);
     let schema = index.schema();
     let reader = index.reader().unwrap();
@@ -180,7 +184,9 @@ Server Start
         }
     });
 
+    print!("加载数据库...");
     let conn = Connection::open("./novels.db").expect("Open DB failed.");
+    print!("加载数据库");
 
     let state = web::Data::new(AppState {
         conn: Mutex::new(conn),
@@ -191,6 +197,7 @@ Server Start
         tid_field,
     });
 
+    print!("启动Web服务");
     HttpServer::new(move || {
         let cors = Cors::default()
             .allow_any_origin()

@@ -18,7 +18,7 @@ export interface PagedResult<T> {
 export interface Record {
 	tid: number;
 	title: string;
-	snippet: string;
+	count: number;
 }
 
 export async function searchNovels(
