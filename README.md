@@ -8,6 +8,15 @@
 
 https://soushu.inf.li/
 
+## Docker部署
+
+```shell
+git clone https://github.com/nekonamic/soushu-local.git
+cd soushu-local
+docker build -t soushu-docker ./
+docker run -d -p 50721:50721 -v /home/nekonamic/source/soushu:/app/data soushu-docker
+```
+
 ## 前端开发
 
 ```shell
@@ -29,13 +38,24 @@ cargo build --release
 
 ## 运行时文件结构
 
-将前端构建后的文件放置于`./web/`文件夹中
+将前端构建后的文件放置于`./data/web/`文件夹中
 
 将后端编译后的二进制文件放置于`./start.exe`
 
-将小说数据库放置于`./novels.db`
+将小说数据库放置于`./data/novels.db`
 
 将分词数据放置于`./index/`
+
+```
+.
+├── start.exe
+├── data
+│   ├── web
+│   │   └── ...
+│   └── novels.db
+└── index
+    └── ...
+```
 
 ## 不想/不会编译
 

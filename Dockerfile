@@ -8,22 +8,15 @@ RUN npm run build
 FROM rust:1.90.0 AS backend-builder
 WORKDIR /app/backend
 COPY backend/ .
-RUN cargo build --release
+RUN apt-get update && apt-get install -y musl-tools build-essential
+RUN rustup target add x86_64-unknown-linux-musl
+RUN cargo build --release --target x86_64-unknown-linux-musl
 
-FROM debian:bookworm-slim AS runner
-
-RUN apt-get update && apt-get install -y \
-    ca-certificates \
- && rm -rf /var/lib/apt/lists/*
-
+FROM alpine:latest
 WORKDIR /app
-
-COPY --from=backend-builder /app/backend/target/release/backend ./start
-
+COPY --from=backend-builder /app/backend/target/x86_64-unknown-linux-musl/release/backend ./start
 COPY --from=frontend-builder /app/frontend/dist ./web
-
+RUN mkdir -p /app/data
 VOLUME ["/app/data"]
-
 EXPOSE 50721
-
 CMD ["./start"]
