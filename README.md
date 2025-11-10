@@ -10,6 +10,8 @@ https://soushu.inf.li/
 
 ## Docker 部署
 
+将下载好的小说数据库`novels.db`与分词数据`index/`至于相同的目录下，挂载在镜像的`/app/data`
+
 ```shell
 git clone https://github.com/nekonamic/soushu-local.git
 cd soushu-local
