@@ -165,7 +165,7 @@ async fn main() -> std::io::Result<()> {
     let jieba_tokenizer = JiebaTokenizer {};
 
     print!("加载分词数据...");
-    let index = tantivy::Index::open_in_dir("./index").expect("idx open fail");
+    let index = tantivy::Index::open_in_dir("./data/index").expect("idx open fail");
     print!("分词数据加载完成");
     index.tokenizers().register("jieba", jieba_tokenizer);
     let schema = index.schema();
@@ -185,7 +185,7 @@ async fn main() -> std::io::Result<()> {
     });
 
     print!("加载数据库...");
-    let conn = Connection::open("./novels.db").expect("Open DB failed.");
+    let conn = Connection::open("./data/novels.db").expect("Open DB failed.");
     print!("加载数据库");
 
     let state = web::Data::new(AppState {
