@@ -1,27 +1,15 @@
 <script setup lang="ts">
 import { useRouter } from "vue-router";
 import { onMounted, ref } from "vue";
-import InputText from "primevue/inputtext";
-import RadioButton from "primevue/radiobutton";
-import RadioButtonGroup from "primevue/radiobuttongroup";
-import Card from "primevue/card";
-import Paginator from "primevue/paginator";
 import { searchNovels } from "@/api/main";
-import Skeleton from "primevue/skeleton";
 import { useSearchStore } from "@/store/search";
-import Message from "primevue/message";
-import Form from "@primevue/forms/form";
 import { useToast } from "primevue/usetoast";
-import Drawer from "primevue/drawer";
-import Button from "primevue/button";
 import HomeTopBar from "@/components/HomeTopBar.vue";
 import type { Fav } from "@/types/Fav";
 import { useConfirm } from "primevue/useconfirm";
 import { registerSW } from "virtual:pwa-register";
-import ProgressBar from 'primevue/progressbar';
 import { useLocalStorage } from "@vueuse/core";
 import type { Progress } from "@/types/Progress";
-import AutoComplete from "primevue/autoComplete";
 
 const favorites = useLocalStorage<Fav[]>('favorites', [])
 const progress = useLocalStorage<Progress[]>('progress', [])

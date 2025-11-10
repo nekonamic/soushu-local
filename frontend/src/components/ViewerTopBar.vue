@@ -5,7 +5,6 @@ const { isDarkMode, toggleDarkMode, setColors } = useLayout();
 import { useEventListener } from "@vueuse/core";
 import { useNovelStore } from "@/store/novel";
 import type { Fav } from "@/types/Fav";
-import Slider from 'primevue/slider';
 import { useRoute } from "vue-router";
 import { useLocalStorage } from "@vueuse/core";
 import type { Progress } from "@/types/Progress";

@@ -2,7 +2,6 @@
 import { nextTick, onMounted, onUnmounted, ref } from "vue";
 import { useRoute } from "vue-router";
 import { getNovel, type Novel } from "@/api/main";
-import Skeleton from "primevue/skeleton";
 import { useToast } from "primevue/usetoast";
 import ViewerTopBar from "@/components/ViewerTopBar.vue";
 import { useNovelStore } from "@/store/novel";
