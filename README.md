@@ -8,13 +8,13 @@
 
 https://soushu.inf.li/
 
-## Docker部署
+## Docker 部署
 
 ```shell
 git clone https://github.com/nekonamic/soushu-local.git
 cd soushu-local
 docker build -t soushu-docker ./
-docker run -d -p 50721:50721 -v /home/nekonamic/source/soushu:/app/data soushu-docker
+docker run -d -p 50721:50721 -v /path/to/your/data/folder:/app/data soushu-docker
 ```
 
 ## 前端开发
