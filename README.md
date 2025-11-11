@@ -8,7 +8,7 @@
 
 https://soushu.inf.li/
 
-> blockquote
+网站可能偶尔无法正常使用，我会尽快修复的，如需高可用建议自托管
 
 ## 数据下载
 
