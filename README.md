@@ -8,6 +8,20 @@
 
 https://soushu.inf.li/
 
+## 数据下载
+
+- 小说数据
+
+https://pan.baidu.com/s/1RwSxAgh4lVkv8o3dJpqcLQ?pwd=nrng 提取码: nrng
+
+- 分词数据
+
+https://pan.baidu.com/s/1RXYHeUraxm6CpCsjNd4F7g?pwd=cu7e 提取码: cu7e
+
+**注意**
+
+这是未去重未清洗的原始数据，里面包含大量重复的、极少量乱码的小说（乱码并非编码问题，原本就是乱码的），但同样也是最全的数据
+
 ## Docker 部署
 
 将下载好的小说数据库`novels.db`与分词数据`index/`至于相同的目录下，挂载在镜像的`/app/data`
