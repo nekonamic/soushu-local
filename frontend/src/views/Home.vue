@@ -258,7 +258,12 @@ function onPageChange(event: { page: number }) {
                     <div class="flex items-center justify-center">
                       <p class="m-0 text-sm text-gray-500">字数: {{ item.count.toLocaleString() }}字</p>
                     </div>
-                    <div class=" flex flex-row gap-2">
+                    <div class=" flex flex-row">
+                      <div
+                        class="flex items-center justify-center h-10 w-10 rounded-full cursor-pointer transition-all duration-200 hover:bg-surface-300 dark:hover:bg-surface-700"
+                        @click.stop.prevent="downloadNovel(item.tid)">
+                        <i class="pi pi-download" :style="{ fontSize: '1.25rem' }" />
+                      </div>
                       <div
                         class="flex items-center justify-center h-10 w-10 rounded-full cursor-pointer transition-all duration-200 hover:bg-surface-300 dark:hover:bg-surface-700"
                         @click.stop.prevent="isFav(item.tid) ? removeFav(item.tid) : addFav(item.tid, item.title)">
@@ -268,11 +273,6 @@ function onPageChange(event: { page: number }) {
                             : 'var(--p-text-color)',
                           fontSize: '1.25rem'
                         }" />
-                      </div>
-                      <div
-                        class="flex items-center justify-center h-10 w-10 rounded-full cursor-pointer transition-all duration-200 hover:bg-surface-300 dark:hover:bg-surface-700"
-                        @click.stop.prevent="downloadNovel(item.tid)">
-                        <i class="pi pi-download" :style="{ fontSize: '1.25rem' }" />
                       </div>
                     </div>
                   </div>
