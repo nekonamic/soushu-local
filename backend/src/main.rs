@@ -158,15 +158,14 @@ async fn main() -> std::io::Result<()> {
 ⠄⠄⠄⠈⠻⣿⣿⣿⣿⣿⣿⣯⣿⣯⣿⣾⣿⣿⣿⣿⣿⡿⠋⠄⠄⠄⠄⠄⠄
 
 #############################
+Server Start
 "#;
 
     println!("{}", art);
 
     let jieba_tokenizer = JiebaTokenizer {};
 
-    print!("加载分词数据...");
     let index = tantivy::Index::open_in_dir("./data/index").expect("idx open fail");
-    print!("分词数据加载完成");
     index.tokenizers().register("jieba", jieba_tokenizer);
     let schema = index.schema();
     let reader = index.reader().unwrap();
@@ -184,9 +183,7 @@ async fn main() -> std::io::Result<()> {
         }
     });
 
-    print!("加载数据库...");
     let conn = Connection::open("./data/novels.db").expect("Open DB failed.");
-    print!("加载数据库");
 
     let state = web::Data::new(AppState {
         conn: Mutex::new(conn),
@@ -197,7 +194,6 @@ async fn main() -> std::io::Result<()> {
         tid_field,
     });
 
-    print!("启动Web服务");
     HttpServer::new(move || {
         let cors = Cors::default()
             .allow_any_origin()
