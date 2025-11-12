@@ -1,1 +1,4 @@
 target/
+**/.env.production
+**/.version
+.idea

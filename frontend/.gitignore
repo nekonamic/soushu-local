@@ -38,3 +38,9 @@ __screenshots__/
 
 # PWA
 dev-dist/
+
+# 小说
+#public/novels/
+.env.development
+.env.production
+**/wrangler.toml

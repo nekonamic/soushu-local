@@ -6,8 +6,6 @@ import vueJsx from '@vitejs/plugin-vue-jsx'
 import vueDevTools from 'vite-plugin-vue-devtools'
 import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa';
-import Components from 'unplugin-vue-components/vite';
-import {PrimeVueResolver} from '@primevue/auto-import-resolver';
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -16,11 +14,6 @@ export default defineConfig({
     vueJsx(),
     vueDevTools(),
     tailwindcss(),
-    Components({
-      resolvers: [
-        PrimeVueResolver()
-      ]
-    }),
     VitePWA({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'mask-icon.svg'],
@@ -45,6 +38,15 @@ export default defineConfig({
             type: 'image/png',
             purpose: 'any maskable'
           }
+        ]
+      },
+      // 简化的缓存配置，只使用预缓存
+      workbox: {
+        globPatterns: [
+          '**/*.{js,css,html,ico,png,svg}',
+          // 匹配所有字体文件，包括带有hash的PrimeIcons文件
+          '**/primeicons*.{woff,woff2,ttf,eot,svg}',
+          '**/*.{woff,woff2,ttf,eot,svg}'
         ]
       },
       devOptions: {
