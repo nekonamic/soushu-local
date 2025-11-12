@@ -8,6 +8,7 @@ import type { Fav } from "@/types/Fav";
 import { useRoute } from "vue-router";
 import { useLocalStorage } from "@vueuse/core";
 import type { Progress } from "@/types/Progress";
+import { downloadNovel } from "@/utils/download"
 
 const favorites = useLocalStorage<Fav[]>('favorites', [])
 const progressStore = useLocalStorage<Progress[]>('progress', [])
@@ -84,7 +85,7 @@ const updateProgress = () => {
     document.documentElement.scrollHeight - window.innerHeight;
   const progress =
     scrollHeight > 0 ? (scrollTop / scrollHeight) * 100 : 0;
-  
+
   if (!isDragging.value) {
     slideValue.value = progress
   }
@@ -118,14 +119,21 @@ watch(slideValue, (val) => {
   <div
     :class="['fixed top-0 left-0 w-full transition-transform duration-300', isHidden ? 'translate-y-[calc(-100%+0.25rem)]' : 'translate-y-0']">
     <div
-      :class="['flex flex-row items-center justify-between p-4', 'bg-white/30 dark:bg-gray-900/30 backdrop-blur-md', 'border-b border-gray-300/50 dark:border-gray-700/50', 'z-50']">
+      :class="['flex flex-row items-center justify-between p-2', 'bg-white/30 dark:bg-gray-900/30 backdrop-blur-md', 'border-b border-gray-300/50 dark:border-gray-700/50', 'z-50']">
+      <div class="flex flex-row">
+        <button type="button"
+          class="mx-4 w-12 h-12 flex items-center justify-center rounded-full hover:bg-surface-100 dark:hover:bg-surface-600 transition-all text-surface-900 dark:text-surface-0 focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface-0 dark:focus-visible:ring-offset-surface-950"
+          @click="toggleFav">
+          <i :class="['pi text-base', { 'pi-star-fill': isFav, 'pi-star': !isFav }]" />
+        </button>
+        <button type="button"
+          class="mx-4 w-12 h-12 flex items-center justify-center rounded-full hover:bg-surface-100 dark:hover:bg-surface-600 transition-all text-surface-900 dark:text-surface-0 focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface-0 dark:focus-visible:ring-offset-surface-950"
+          @click="downloadNovel(tid)">
+          <i class="pi pi-download" />
+        </button>
+      </div>
       <button type="button"
-        class="mx-4 w-12 h-6 flex items-center justify-center rounded-full hover:bg-surface-100 dark:hover:bg-surface-800 transition-all text-surface-900 dark:text-surface-0 focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface-0 dark:focus-visible:ring-offset-surface-950"
-        @click="toggleFav">
-        <i :class="['pi text-base', { 'pi-star-fill': isFav, 'pi-star': !isFav }]" />
-      </button>
-      <button type="button"
-        class="mx-4 w-12 h-6 flex items-center justify-center rounded-full hover:bg-surface-100 dark:hover:bg-surface-800 transition-all text-surface-900 dark:text-surface-0 focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface-0 dark:focus-visible:ring-offset-surface-950"
+        class="mx-4 w-12 h-12 flex items-center justify-center rounded-full hover:bg-surface-100 dark:hover:bg-surface-600 transition-all text-surface-900 dark:text-surface-0 focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-surface-0 dark:focus-visible:ring-offset-surface-950"
         @click="toggleDarkMode">
         <i :class="['pi text-base', { 'pi-moon': isDarkMode, 'pi-sun': !isDarkMode }]" />
       </button>

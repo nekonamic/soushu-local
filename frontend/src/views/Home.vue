@@ -10,6 +10,7 @@ import { useConfirm } from "primevue/useconfirm";
 import { registerSW } from "virtual:pwa-register";
 import { useLocalStorage } from "@vueuse/core";
 import type { Progress } from "@/types/Progress";
+import { downloadNovel } from "@/utils/download"
 
 const favorites = useLocalStorage<Fav[]>('favorites', [])
 const progress = useLocalStorage<Progress[]>('progress', [])
@@ -127,6 +128,12 @@ async function fetchData(isNewSearch: boolean) {
       life: 3000,
     });
   } finally {
+    toast.add({
+      severity: "success",
+      summary: "完成",
+      detail: `匹配到${searchStore.total}个文档`,
+      life: 4000,
+    });
     isLoading.value = false;
   }
 
@@ -164,12 +171,18 @@ function onPageChange(event: { page: number }) {
           class="block">
           <Card class="transition-colors duration-200 hover:bg-surface-100! dark:hover:bg-surface-900! cursor-pointer">
             <template #title>
-              <div class="flex justify-between">
+              <div class="flex justify-between items-center">
                 <p class="font-bold mr-2 break-all">{{ item.title }}</p>
-                <i v-if="isFav(item.tid)" class="pi pi-star-fill" @click.stop.prevent="removeFav(item.tid)"
-                  :style="{ color: 'var(--p-button-primary-background)', fontSize: '1.5rem' }"></i>
-                <i v-else class="pi pi-star" @click.stop.prevent="addFav(item.tid, item.title)"
-                  :style="{ color: 'var(--p-button-primary-background)', fontSize: '1.5rem' }"></i>
+                <div
+                  class="flex items-center justify-center h-10 w-10 rounded-full cursor-pointer transition-all duration-200 hover:bg-surface-300 dark:hover:bg-surface-700"
+                  @click.stop.prevent="isFav(item.tid) ? removeFav(item.tid) : addFav(item.tid, item.title)">
+                  <i :class="['pi', isFav(item.tid) ? 'pi-star-fill' : 'pi-star']" :style="{
+                    color: isFav(item.tid)
+                      ? 'var(--p-button-primary-background)'
+                      : 'var(--p-text-color)',
+                    fontSize: '1.25rem'
+                  }" />
+                </div>
               </div>
             </template>
             <template #content>
@@ -238,14 +251,31 @@ function onPageChange(event: { page: number }) {
                 <template #title>
                   <div class="flex justify-between">
                     <p class="font-bold break-all mr-2">{{ item.title }}</p>
-                    <i v-if="isFav(item.tid)" class="pi pi-star-fill" @click.stop.prevent="removeFav(item.tid)"
-                      :style="{ color: 'var(--p-button-primary-background)', fontSize: '1.5rem' }"></i>
-                    <i v-else class="pi pi-star" @click.stop.prevent="addFav(item.tid, item.title)"
-                      :style="{ color: 'var(--p-button-primary-background)', fontSize: '1.5rem' }"></i>
                   </div>
                 </template>
                 <template #content>
-                  <p class="m-0 text-sm text-gray-500">字数: {{ item.count.toLocaleString() }}字</p>
+                  <div class=" flex flex-row justify-between">
+                    <div class="flex items-center justify-center">
+                      <p class="m-0 text-sm text-gray-500">字数: {{ item.count.toLocaleString() }}字</p>
+                    </div>
+                    <div class=" flex flex-row gap-2">
+                      <div
+                        class="flex items-center justify-center h-10 w-10 rounded-full cursor-pointer transition-all duration-200 hover:bg-surface-300 dark:hover:bg-surface-700"
+                        @click.stop.prevent="isFav(item.tid) ? removeFav(item.tid) : addFav(item.tid, item.title)">
+                        <i :class="['pi', isFav(item.tid) ? 'pi-star-fill' : 'pi-star']" :style="{
+                          color: isFav(item.tid)
+                            ? 'var(--p-button-primary-background)'
+                            : 'var(--p-text-color)',
+                          fontSize: '1.25rem'
+                        }" />
+                      </div>
+                      <div
+                        class="flex items-center justify-center h-10 w-10 rounded-full cursor-pointer transition-all duration-200 hover:bg-surface-300 dark:hover:bg-surface-700"
+                        @click.stop.prevent="downloadNovel(item.tid)">
+                        <i class="pi pi-download" :style="{ fontSize: '1.25rem' }" />
+                      </div>
+                    </div>
+                  </div>
                 </template>
               </Card>
             </a>
