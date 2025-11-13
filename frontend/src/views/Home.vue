@@ -8,13 +8,12 @@ import HomeTopBar from "@/components/HomeTopBar.vue";
 import type { Fav } from "@/types/Fav";
 import { useConfirm } from "primevue/useconfirm";
 import { registerSW } from "virtual:pwa-register";
-import { useLocalStorage } from "@vueuse/core";
-import type { Progress } from "@/types/Progress";
 import { downloadNovel } from "@/utils/download";
+import { useProgress, useFavorites, useHistory } from "@/composables/useLocal";
 
-const favorites = useLocalStorage<Fav[]>("favorites", []);
-const progress = useLocalStorage<Progress[]>("progress", []);
-const history = useLocalStorage<string[]>("history", []);
+const history = useHistory();
+const progress = useProgress();
+const favorites = useFavorites();
 
 const toast = useToast();
 
@@ -223,7 +222,7 @@ function onPageChange(event: { page: number }) {
         </a>
       </div>
     </Drawer>
-    <div class=" overflow-x-hidden">
+    <div>
       <div class=" flex flex-col items-center justify-center gap-4">
         <div class=" flex flex-col items-center justify-center mt-40 md:mb-10 mb-4">
           <h1

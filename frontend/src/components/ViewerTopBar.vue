@@ -6,12 +6,11 @@ import { useEventListener } from "@vueuse/core";
 import { useNovelStore } from "@/store/novel";
 import type { Fav } from "@/types/Fav";
 import { useRoute } from "vue-router";
-import { useLocalStorage } from "@vueuse/core";
-import type { Progress } from "@/types/Progress";
 import { downloadNovel } from "@/utils/download";
+import { useProgress, useFavorites } from "@/composables/useLocal";
 
-const favorites = useLocalStorage<Fav[]>("favorites", []);
-const progressStore = useLocalStorage<Progress[]>("progress", []);
+const favorites = useFavorites();
+const progressStore = useProgress();
 
 const route = useRoute();
 const tid = Number(route.params.tid);
@@ -88,35 +87,39 @@ const isHidden = ref(false);
 let lastScrollY = window.scrollY;
 
 const handleScroll = () => {
-  if (!isDragging.value) {
-    const currentScrollY = window.scrollY;
-    if (currentScrollY > lastScrollY) {
-      isHidden.value = true;
-    } else {
-      isHidden.value = false;
+  if (!novelStore.isLoading) {
+    if (!isDragging.value) {
+      const currentScrollY = window.scrollY;
+      if (currentScrollY > lastScrollY) {
+        isHidden.value = true;
+      } else {
+        isHidden.value = false;
+      }
+      lastScrollY = currentScrollY;
     }
-    lastScrollY = currentScrollY;
   }
 };
 
 useEventListener(window, "scroll", handleScroll);
 
 const updateProgress = () => {
-  const scrollTop = window.scrollY;
-  const scrollHeight =
-    document.documentElement.scrollHeight - window.innerHeight;
-  const progress = scrollHeight > 0 ? (scrollTop / scrollHeight) * 100 : 0;
+  if (!novelStore.isLoading) {
+    const scrollTop = window.scrollY;
+    const scrollHeight =
+      document.documentElement.scrollHeight - window.innerHeight;
+    const progress = scrollHeight > 0 ? (scrollTop / scrollHeight) * 100 : 0;
 
-  if (!isDragging.value) {
-    slideValue.value = progress;
-  }
+    if (!isDragging.value) {
+      slideValue.value = progress;
+    }
 
-  const index = progressStore.value.findIndex((item) => item.tid === tid);
+    const index = progressStore.value.findIndex((item) => item.tid === tid);
 
-  if (index !== -1) {
-    progressStore.value[index]!.progress = progress;
-  } else {
-    progressStore.value.push({ tid, progress });
+    if (index !== -1) {
+      progressStore.value[index]!.progress = progress;
+    } else {
+      progressStore.value.push({ tid, progress });
+    }
   }
 };
 

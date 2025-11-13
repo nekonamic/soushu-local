@@ -5,10 +5,9 @@ import { getNovel, type Novel } from "@/api/main";
 import { useToast } from "primevue/usetoast";
 import ViewerTopBar from "@/components/ViewerTopBar.vue";
 import { useNovelStore } from "@/store/novel";
-import { useLocalStorage } from "@vueuse/core";
-import type { Progress } from "@/types/Progress";
+import { useProgress } from "@/composables/useLocal";
 
-const progressStore = useLocalStorage<Progress[]>("progress", []);
+const progressStore = useProgress();
 
 const novelStore = useNovelStore();
 
