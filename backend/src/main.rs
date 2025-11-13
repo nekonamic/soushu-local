@@ -243,6 +243,7 @@ Server Start
             .app_data(state.clone())
             .route("/api/search", web::get().to(search))
             .route("/api/novel/{tid}", web::get().to(get_novel))
+            .route("/api/random", web::get().to(random))
             .service(actix_files::Files::new("/", "./web").index_file("index.html"))
             .default_service(actix_web::web::get().to(spa_index))
     })

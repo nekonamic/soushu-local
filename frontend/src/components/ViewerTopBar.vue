@@ -32,10 +32,10 @@ onMounted(async () => {
 
   if (index !== -1) {
     await new Promise<void>((resolve) => {
-      if (novelStore.isLoading) return resolve();
+      if (!novelStore.isLoading) return resolve();
 
       const stop = watch(
-        () => novelStore.isLoading,
+        () => !novelStore.isLoading,
         (val) => {
           if (val) {
             stop();
