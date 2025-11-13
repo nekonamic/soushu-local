@@ -139,10 +139,9 @@ async function fetchData(isNewSearch: boolean) {
 		isLoading.value = false;
 	}
 
-	window.scrollTo({
-		top: 0,
-		behavior: "smooth",
-	});
+	setTimeout(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, 50);
 }
 
 async function fetchRandomData() {
