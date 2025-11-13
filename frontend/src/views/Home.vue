@@ -264,7 +264,7 @@ function onPageChange(event: { page: number }) {
                     </RadioButtonGroup>
                   </div>
                 </div>
-                <div class="flex flex-row gap-4 items-center">
+                <div class="flex flex-row gap-2 sm:gap-4 items-center">
                   <Button icon="pi pi-sync" aria-label="Save" @click="fetchRandomData" />
                   <Button icon="pi pi-star-fill" aria-label="Save" @click="drawerVisible = true" />
                 </div>
@@ -316,7 +316,7 @@ function onPageChange(event: { page: number }) {
           <div>
             <Paginator :rows=rows :totalRecords=searchStore.total v-model:first="offset" @page="onPageChange"
               v-if="searchStore.total !== 0" :template="{
-                '640px': 'PrevPageLink CurrentPageReport NextPageLink JumpToPageDropdown JumpToPageInput',
+                '640px': 'PrevPageLink CurrentPageReport NextPageLink JumpToPageInput',
                 default: 'FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink JumpToPageDropdown JumpToPageInput'
               }">
             </Paginator>
