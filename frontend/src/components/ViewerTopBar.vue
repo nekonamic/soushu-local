@@ -8,36 +8,59 @@ import type { Fav } from "@/types/Fav";
 import { useRoute } from "vue-router";
 import { useLocalStorage } from "@vueuse/core";
 import type { Progress } from "@/types/Progress";
-import { downloadNovel } from "@/utils/download"
+import { downloadNovel } from "@/utils/download";
 
-const favorites = useLocalStorage<Fav[]>('favorites', [])
-const progressStore = useLocalStorage<Progress[]>('progress', [])
+const favorites = useLocalStorage<Fav[]>("favorites", []);
+const progressStore = useLocalStorage<Progress[]>("progress", []);
 
 const route = useRoute();
 const tid = Number(route.params.tid);
 
-onMounted(() => {
+onMounted(async () => {
   setColors();
 
-  const index = progressStore.value.findIndex(item => item.tid === tid)
+  const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+
+  if (mediaQuery.matches && !isDarkMode.value) {
+    toggleDarkMode();
+  } else if (!mediaQuery.matches && isDarkMode.value) {
+    toggleDarkMode();
+  }
+
+  const index = progressStore.value.findIndex((item) => item.tid === tid);
+
 
   if (index !== -1) {
-    slideValue.value = progressStore.value[index]!.progress
+    await new Promise<void>((resolve) => {
+      if (novelStore.isLoading) return resolve();
+
+      const stop = watch(
+        () => novelStore.isLoading,
+        (val) => {
+          if (val) {
+            stop();
+            resolve();
+          }
+        }
+      );
+    });
+
+    slideValue.value = progressStore.value[index]!.progress;
   }
-})
+});
 
 const novelStore = useNovelStore();
 
-const slideValue = ref(0)
-const isDragging = ref(false)
+const slideValue = ref(0);
+const isDragging = ref(false);
 
 const onSlideStart = () => {
-  isDragging.value = true
-}
+  isDragging.value = true;
+};
 
 const onSlideEnd = () => {
-  isDragging.value = false
-}
+  isDragging.value = false;
+};
 
 const isFav = computed(() =>
   favorites.value.some((f) => f.tid === novelStore.tid),
@@ -61,7 +84,6 @@ const removeFav = () => {
   favorites.value = favorites.value.filter((f) => f.tid !== novelStore.tid);
 };
 
-
 const isHidden = ref(false);
 let lastScrollY = window.scrollY;
 
@@ -83,19 +105,18 @@ const updateProgress = () => {
   const scrollTop = window.scrollY;
   const scrollHeight =
     document.documentElement.scrollHeight - window.innerHeight;
-  const progress =
-    scrollHeight > 0 ? (scrollTop / scrollHeight) * 100 : 0;
+  const progress = scrollHeight > 0 ? (scrollTop / scrollHeight) * 100 : 0;
 
   if (!isDragging.value) {
-    slideValue.value = progress
+    slideValue.value = progress;
   }
 
-  const index = progressStore.value.findIndex(item => item.tid === tid)
+  const index = progressStore.value.findIndex((item) => item.tid === tid);
 
   if (index !== -1) {
-    progressStore.value[index]!.progress = progress
+    progressStore.value[index]!.progress = progress;
   } else {
-    progressStore.value.push({ tid, progress })
+    progressStore.value.push({ tid, progress });
   }
 };
 
@@ -108,9 +129,8 @@ watch(slideValue, (val) => {
     const targetScroll = (val / 100) * scrollHeight;
     window.scrollTo({
       top: targetScroll,
-      behavior: 'smooth',
+      behavior: "smooth",
     });
-
   }
 });
 </script>

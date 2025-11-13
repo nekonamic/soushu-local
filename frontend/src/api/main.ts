@@ -39,6 +39,14 @@ export async function searchNovels(
 	return response.json();
 }
 
+export async function randomNovels(): Promise<PagedResult<Record>> {
+	const response = await fetch(`${apiBase}/api/random`);
+	if (!response.ok) {
+		throw new Error("请求失败");
+	}
+	return response.json();
+}
+
 export async function getNovel(tid: number): Promise<Novel> {
 	const response = await fetch(`${apiBase}/api/novel/${tid}`);
 	if (!response.ok) {

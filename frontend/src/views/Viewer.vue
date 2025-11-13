@@ -8,7 +8,7 @@ import { useNovelStore } from "@/store/novel";
 import { useLocalStorage } from "@vueuse/core";
 import type { Progress } from "@/types/Progress";
 
-const progressStore = useLocalStorage<Progress[]>('progress', [])
+const progressStore = useLocalStorage<Progress[]>("progress", []);
 
 const novelStore = useNovelStore();
 
@@ -18,42 +18,43 @@ const route = useRoute();
 const data = ref<Novel>();
 
 onMounted(async () => {
-  const tid = Number(route.params.tid);
+	const tid = Number(route.params.tid);
 
-  try {
-    data.value = await getNovel(tid);
-    novelStore.tid = data.value.tid;
-    novelStore.title = data.value.title;
-  } catch (err: any) {
-    toast.add({
-      severity: "error",
-      summary: "错误",
-      detail: "请求失败",
-      life: 3000,
-    });
-  } finally {
-    novelStore.isLoading = false;
-  }
+	try {
+		data.value = await getNovel(tid);
+		novelStore.tid = data.value.tid;
+		novelStore.title = data.value.title;
+	} catch (err: any) {
+		toast.add({
+			severity: "error",
+			summary: "错误",
+			detail: "请求失败",
+			life: 3000,
+		});
+	} finally {
+		novelStore.isLoading = false;
+	}
 
-  await nextTick();
+	await nextTick();
 
-  const index = progressStore.value.findIndex(item => item.tid === tid)
+	const index = progressStore.value.findIndex((item) => item.tid === tid);
 
-  if (index !== -1) {
-    const doc = document.documentElement;
-    const scrollHeight = doc.scrollHeight - doc.clientHeight;
-    const targetScroll = (progressStore.value[index]!.progress / 100) * scrollHeight;
-    window.scrollTo({
-      top: targetScroll,
-      behavior: 'smooth',
-    });
-  }
+	if (index !== -1) {
+		const doc = document.documentElement;
+		const scrollHeight = doc.scrollHeight - doc.clientHeight;
+		const targetScroll =
+			(progressStore.value[index]!.progress / 100) * scrollHeight;
+		window.scrollTo({
+			top: targetScroll,
+			behavior: "smooth",
+		});
+	}
 });
 
 onUnmounted(() => {
-  novelStore.tid = 0;
-  novelStore.title = "";
-  novelStore.isLoading = true;
+	novelStore.tid = 0;
+	novelStore.title = "";
+	novelStore.isLoading = true;
 });
 </script>
 

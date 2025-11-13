@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useRouter } from "vue-router";
 import { onMounted, ref } from "vue";
-import { searchNovels } from "@/api/main";
+import { searchNovels, randomNovels } from "@/api/main";
 import { useSearchStore } from "@/store/search";
 import { useToast } from "primevue/usetoast";
 import HomeTopBar from "@/components/HomeTopBar.vue";
@@ -10,11 +10,11 @@ import { useConfirm } from "primevue/useconfirm";
 import { registerSW } from "virtual:pwa-register";
 import { useLocalStorage } from "@vueuse/core";
 import type { Progress } from "@/types/Progress";
-import { downloadNovel } from "@/utils/download"
+import { downloadNovel } from "@/utils/download";
 
-const favorites = useLocalStorage<Fav[]>('favorites', [])
-const progress = useLocalStorage<Progress[]>('progress', [])
-const history = useLocalStorage<string[]>('history', [])
+const favorites = useLocalStorage<Fav[]>("favorites", []);
+const progress = useLocalStorage<Progress[]>("progress", []);
+const history = useLocalStorage<string[]>("history", []);
 
 const toast = useToast();
 
@@ -35,126 +35,158 @@ const isFav = (tid: number) => favorites.value.some((f) => f.tid === tid);
 const drawerVisible = ref(false);
 
 const addFav = (tid: number, title: string) => {
-  const fav: Fav = { tid, title };
-  if (!isFav(tid)) {
-    favorites.value.push(fav);
-  }
+	const fav: Fav = { tid, title };
+	if (!isFav(tid)) {
+		favorites.value.push(fav);
+	}
 };
 
 const removeFav = (tid: number) => {
-  favorites.value = favorites.value.filter((f) => f.tid !== tid);
+	favorites.value = favorites.value.filter((f) => f.tid !== tid);
 };
 
 onMounted(() => {
-  const updateSW = registerSW({
-    immediate: true,
+	const updateSW = registerSW({
+		immediate: true,
 
-    onNeedRefresh() {
-      confirm.require({
-        header: "更新可用",
-        message: "检测到新版本，是否立即刷新？",
-        icon: "pi pi-refresh",
-        acceptProps: {
-          label: "立即更新",
-        },
-        rejectProps: {
-          label: "稍后",
-          severity: "secondary",
-          outlined: true,
-        },
-        accept: () => {
-          updateSW(true);
-          toast.add({
-            severity: "info",
-            summary: "更新中",
-            detail: "正在刷新以加载最新版本…",
-            life: 3000,
-          });
-        },
-        reject: () => {
-          toast.add({
-            severity: "warn",
-            summary: "已取消",
-            detail: "稍后可手动刷新更新",
-            life: 3000,
-          });
-        },
-      });
-    },
+		onNeedRefresh() {
+			confirm.require({
+				header: "更新可用",
+				message: "检测到新版本，是否立即刷新？",
+				icon: "pi pi-refresh",
+				acceptProps: {
+					label: "立即更新",
+				},
+				rejectProps: {
+					label: "稍后",
+					severity: "secondary",
+					outlined: true,
+				},
+				accept: () => {
+					updateSW(true);
+					toast.add({
+						severity: "info",
+						summary: "更新中",
+						detail: "正在刷新以加载最新版本…",
+						life: 3000,
+					});
+				},
+				reject: () => {
+					toast.add({
+						severity: "warn",
+						summary: "已取消",
+						detail: "稍后可手动刷新更新",
+						life: 3000,
+					});
+				},
+			});
+		},
 
-    onOfflineReady() {
-      toast.add({
-        severity: "success",
-        summary: "更新完成",
-        detail: "已准备好离线使用",
-        life: 4000,
-      });
-    },
-  });
+		onOfflineReady() {
+			toast.add({
+				severity: "success",
+				summary: "更新完成",
+				detail: "已准备好离线使用",
+				life: 4000,
+			});
+		},
+	});
 
-  offset.value = (searchStore.page - 1) * rows.value;
+	offset.value = (searchStore.page - 1) * rows.value;
 });
 
 async function fetchData(isNewSearch: boolean) {
-  if (isNewSearch) {
-    if (!history.value.includes(searchStore.keyword)) {
-      history.value.unshift(searchStore.keyword);
-    }
-    if (history.value.length > 20) {
-      history.value = history.value.slice(0, 20);
-    }
+	if (isNewSearch) {
+		if (!history.value.includes(searchStore.keyword)) {
+			history.value.unshift(searchStore.keyword);
+		}
+		if (history.value.length > 20) {
+			history.value = history.value.slice(0, 20);
+		}
 
-    searchStore.records = [];
-    searchStore.total = 0;
-    searchStore.page = 1;
-    offset.value = (searchStore.page - 1) * rows.value;
-  }
+		searchStore.records = [];
+		searchStore.total = 0;
+		searchStore.page = 1;
+		offset.value = (searchStore.page - 1) * rows.value;
+	}
 
-  try {
-    isLoading.value = true;
-    const res = await searchNovels(
-      searchStore.target,
-      searchStore.keyword,
-      searchStore.page,
-    );
-    searchStore.records = [];
-    searchStore.records = res.records;
-    searchStore.total = res.total;
-  } catch (err) {
-    toast.add({
-      severity: "error",
-      summary: "错误",
-      detail: "搜索失败",
-      life: 3000,
-    });
-  } finally {
-    toast.add({
-      severity: "success",
-      summary: "完成",
-      detail: `匹配到${searchStore.total}个文档`,
-      life: 4000,
-    });
-    isLoading.value = false;
-  }
+	try {
+		isLoading.value = true;
+		const res = await searchNovels(
+			searchStore.target,
+			searchStore.keyword,
+			searchStore.page,
+		);
+		searchStore.records = [];
+		searchStore.records = res.records;
+		searchStore.total = res.total;
+		if (isNewSearch) {
+			toast.add({
+				severity: "success",
+				summary: "完成",
+				detail: `匹配到${searchStore.total}个文档`,
+				life: 4000,
+			});
+		}
+	} catch (err) {
+		toast.add({
+			severity: "error",
+			summary: "错误",
+			detail: "搜索失败",
+			life: 3000,
+		});
+	} finally {
+		isLoading.value = false;
+	}
 
-  window.scrollTo({
-    top: 0,
-    behavior: "smooth",
-  });
+	window.scrollTo({
+		top: 0,
+		behavior: "smooth",
+	});
+}
+
+async function fetchRandomData() {
+	searchStore.records = [];
+	searchStore.total = 0;
+	searchStore.page = 1;
+	offset.value = (searchStore.page - 1) * rows.value;
+
+	try {
+		isLoading.value = true;
+		const res = await randomNovels();
+		searchStore.records = [];
+		searchStore.records = res.records;
+		searchStore.total = res.total;
+		toast.add({
+			severity: "success",
+			summary: "完成",
+			detail: `随机获取20个文档`,
+			life: 4000,
+		});
+	} catch (err) {
+		toast.add({
+			severity: "error",
+			summary: "错误",
+			detail: "搜索失败",
+			life: 3000,
+		});
+	} finally {
+		isLoading.value = false;
+	}
 }
 
 function handleCardClick(event: MouseEvent, tid: number) {
-  if (event.button === 0) {
-    event.preventDefault();
-    router.push(`/${tid}`);
-  }
+	if (event.button === 0) {
+		event.preventDefault();
+		router.push(`/${tid}`);
+	}
 }
 
 function onPageChange(event: { page: number }) {
-  if (!isLoading.value) {
-    searchStore.page = event.page + 1;
-    fetchData(false);
-  }
+	if (!isLoading.value) {
+		searchStore.page = event.page + 1;
+		fetchData(false);
+	}
 }
 </script>
 
@@ -232,16 +264,17 @@ function onPageChange(event: { page: number }) {
                     </RadioButtonGroup>
                   </div>
                 </div>
-                <div>
+                <div class="flex flex-row gap-4 items-center">
+                  <Button icon="pi pi-sync" aria-label="Save" @click="fetchRandomData" />
                   <Button icon="pi pi-star-fill" aria-label="Save" @click="drawerVisible = true" />
                 </div>
               </div>
             </div>
           </Form>
-          <div class="grid md:grid-cols-2 grid-cols-1 gap-4" v-if="isLoading">
+          <div class="grid md:grid-cols-3 sm:grid-cols-2 grid-cols-1 gap-4" v-if="isLoading">
             <Skeleton height="15rem"
               class="transition-colors duration-200 hover:bg-surface-100! dark:hover:bg-surface-800! cursor-pointer"
-              v-for="_ in 10"></Skeleton>
+              v-for="_ in 20"></Skeleton>
           </div>
           <div class="columns-1 sm:columns-2 md:columns-3 gap-4" v-else>
             <a v-for="item in searchStore.records" :key="item.tid" :href="`/${item.tid}`"
@@ -283,9 +316,7 @@ function onPageChange(event: { page: number }) {
           <div>
             <Paginator :rows=rows :totalRecords=searchStore.total v-model:first="offset" @page="onPageChange"
               v-if="searchStore.total !== 0" :template="{
-                '640px': 'PrevPageLink CurrentPageReport NextPageLink',
-                '960px': 'FirstPageLink PrevPageLink CurrentPageReport NextPageLink LastPageLink',
-                '1300px': 'FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink',
+                '640px': 'PrevPageLink CurrentPageReport NextPageLink JumpToPageDropdown JumpToPageInput',
                 default: 'FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink JumpToPageDropdown JumpToPageInput'
               }">
             </Paginator>

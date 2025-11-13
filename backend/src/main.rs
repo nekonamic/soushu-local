@@ -1,14 +1,14 @@
 use actix_cors::Cors;
 use actix_files::NamedFile;
+use actix_web::middleware::Compress;
 use actix_web::{App, HttpRequest, HttpResponse, HttpServer, Responder, Result, web};
 use rusqlite::{Connection, OptionalExtension, params};
 use serde::Serialize;
 use std::sync::Mutex;
-use tantivy::{TantivyDocument};
-use tantivy::{schema::Value};
+use tantivy::TantivyDocument;
+use tantivy::schema::Value;
 use tantivy_jieba::JiebaTokenizer;
 use webbrowser;
-use actix_web::middleware::Compress;
 
 const PAGE_SIZE: i64 = 20;
 
@@ -81,7 +81,12 @@ async fn search(
     for (_score, addr) in top_docs {
         if let Ok(doc) = searcher.doc::<TantivyDocument>(addr) {
             let tid_val = doc.get_first(data.tid_field).unwrap().as_u64().unwrap() as i64;
-            let title_val = doc.get_first(data.title_field).unwrap().as_str().unwrap().to_string();
+            let title_val = doc
+                .get_first(data.title_field)
+                .unwrap()
+                .as_str()
+                .unwrap()
+                .to_string();
 
             let mut stmt = conn
                 .prepare("SELECT LENGTH(content) AS count FROM novels WHERE tid=?1")
@@ -134,6 +139,36 @@ async fn get_novel(data: web::Data<AppState>, path: web::Path<i64>) -> impl Resp
         Some(n) => HttpResponse::Ok().json(n),
         None => HttpResponse::NotFound().body("Not found"),
     }
+}
+
+// GET /api/random
+async fn random(data: web::Data<AppState>) -> impl Responder {
+    let conn = data.conn.lock().unwrap();
+
+    let mut stmt = conn
+        .prepare(
+            "SELECT tid, title, LENGTH(content) AS count FROM novels ORDER BY RANDOM() LIMIT 20;",
+        )
+        .unwrap();
+
+    let records: Vec<Record> = stmt
+        .query_map([], |row| {
+            Ok(Record {
+                tid: row.get(0)?,
+                title: row.get(1)?,
+                count: row.get(2)?,
+            })
+        })
+        .unwrap()
+        .filter_map(Result::ok)
+        .collect();
+
+    HttpResponse::Ok().json(PagedResult {
+        total: PAGE_SIZE,
+        page: 0,
+        page_size: PAGE_SIZE,
+        records,
+    })
 }
 
 async fn spa_index(_req: HttpRequest) -> Result<NamedFile> {

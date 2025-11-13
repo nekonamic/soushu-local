@@ -17,10 +17,10 @@ const router = createRouter({
 			component: Viewer,
 		},
 		{
-			path: '/doc',
-			name: 'doc',
+			path: "/doc",
+			name: "doc",
 			component: SearchDoc,
-		}
+		},
 	],
 });
 
