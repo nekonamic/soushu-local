@@ -67,7 +67,7 @@ onMounted(() => {
 						severity: "info",
 						summary: "更新中",
 						detail: "正在刷新以加载最新版本…",
-						life: 3000,
+						life: 4000,
 					});
 				},
 				reject: () => {
@@ -75,7 +75,7 @@ onMounted(() => {
 						severity: "warn",
 						summary: "已取消",
 						detail: "稍后可手动刷新更新",
-						life: 3000,
+						life: 4000,
 					});
 				},
 			});
@@ -94,63 +94,26 @@ onMounted(() => {
 	offset.value = (searchStore.page - 1) * rows.value;
 });
 
-async function fetchData(isNewSearch: boolean) {
-	if (isNewSearch) {
-		if (!history.value.includes(searchStore.keyword)) {
-			history.value.unshift(searchStore.keyword);
-		}
-		if (history.value.length > 20) {
-			history.value = history.value.slice(0, 20);
-		}
-
-		searchStore.records = [];
-		searchStore.total = 0;
-		searchStore.page = 1;
-		offset.value = (searchStore.page - 1) * rows.value;
-	}
-
-	try {
-		isLoading.value = true;
-		const res = await searchNovels(
-			searchStore.target,
-			searchStore.keyword,
-			searchStore.page,
-		);
-		searchStore.records = [];
-		searchStore.records = res.records;
-		searchStore.total = res.total;
-		if (isNewSearch) {
-			toast.add({
-				severity: "success",
-				summary: "完成",
-				detail: `匹配到${searchStore.total}个文档`,
-				life: 4000,
-			});
-		}
-	} catch (err) {
-		toast.add({
-			severity: "error",
-			summary: "错误",
-			detail: "搜索失败",
-			life: 3000,
-		});
-	} finally {
-		isLoading.value = false;
-	}
-
-	setTimeout(() => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }, 50);
+async function fetchData() {
+	const res = await searchNovels(
+		searchStore.target,
+		searchStore.keyword,
+		searchStore.page,
+	);
+	searchStore.records = [];
+	searchStore.records = res.records;
+	searchStore.total = res.total;
 }
 
 async function fetchRandomData() {
+	isLoading.value = true;
+
 	searchStore.records = [];
 	searchStore.total = 0;
 	searchStore.page = 1;
 	offset.value = (searchStore.page - 1) * rows.value;
 
 	try {
-		isLoading.value = true;
 		const res = await randomNovels();
 		searchStore.records = [];
 		searchStore.records = res.records;
@@ -165,8 +128,8 @@ async function fetchRandomData() {
 		toast.add({
 			severity: "error",
 			summary: "错误",
-			detail: "搜索失败",
-			life: 3000,
+			detail: "获取失败",
+			life: 4000,
 		});
 	} finally {
 		isLoading.value = false;
@@ -180,11 +143,68 @@ function handleCardClick(event: MouseEvent, tid: number) {
 	}
 }
 
-function onPageChange(event: { page: number }) {
-	if (!isLoading.value) {
+async function onPageChange(event: { page: number }) {
+	isLoading.value = true;
+	searchStore.page = event.page + 1;
+
+	try {
+		await fetchData();
+		toast.add({
+			severity: "success",
+			summary: "完成",
+			detail: `获取成功`,
+			life: 4000,
+		});
+		setTimeout(() => {
+			window.scrollTo({ top: 0, behavior: "smooth" });
+		}, 50);
+	} catch (err) {
 		searchStore.page = event.page + 1;
-		fetchData(false);
+		toast.add({
+			severity: "error",
+			summary: "错误",
+			detail: "搜索失败",
+			life: 4000,
+		});
 	}
+
+	isLoading.value = false;
+}
+
+async function onNewSearch() {
+	isLoading.value = true;
+
+	if (!history.value.includes(searchStore.keyword)) {
+		history.value.unshift(searchStore.keyword);
+	}
+	if (history.value.length > 20) {
+		history.value = history.value.slice(0, 20);
+	}
+
+	searchStore.records = [];
+	searchStore.total = 0;
+	searchStore.page = 1;
+	offset.value = (searchStore.page - 1) * rows.value;
+
+	try {
+		await fetchData();
+
+		toast.add({
+			severity: "success",
+			summary: "完成",
+			detail: `匹配到${searchStore.total}个文档`,
+			life: 4000,
+		});
+	} catch (err) {
+		toast.add({
+			severity: "error",
+			summary: "错误",
+			detail: "搜索失败",
+			life: 4000,
+		});
+	}
+
+	isLoading.value = false;
 }
 </script>
 
@@ -231,7 +251,7 @@ function onPageChange(event: { page: number }) {
           <h6 class=" text-gray-300 mt-2">搜书吧全文搜索(FTS)</h6>
         </div>
         <div class=" max-w-7xl w-full px-8 flex flex-col gap-4">
-          <Form @submit="fetchData(true)" class="flex justify-center flex-col gap-4">
+          <Form @submit="onNewSearch" class="flex justify-center flex-col gap-4">
             <div class="flex flex-col gap-2">
               <AutoComplete v-model="searchStore.keyword" placeholder="搜索..."
                 :inputStyle="{ width: '100%', fontSize: '16px' }" :suggestions="history" :completeOnFocus="true" />
@@ -270,9 +290,9 @@ function onPageChange(event: { page: number }) {
             </div>
           </Form>
           <div class="grid md:grid-cols-3 sm:grid-cols-2 grid-cols-1 gap-4" v-if="isLoading">
-            <Skeleton height="15rem"
+            <Skeleton height="10rem"
               class="transition-colors duration-200 hover:bg-surface-100! dark:hover:bg-surface-800! cursor-pointer"
-              v-for="_ in 20"></Skeleton>
+              v-for="_ in 18"></Skeleton>
           </div>
           <div class="columns-1 sm:columns-2 md:columns-3 gap-4" v-else>
             <a v-for="item in searchStore.records" :key="item.tid" :href="`/${item.tid}`"
@@ -312,8 +332,8 @@ function onPageChange(event: { page: number }) {
             </a>
           </div>
           <div>
-            <Paginator :rows=rows :totalRecords=searchStore.total v-model:first="offset" @page="onPageChange"
-              v-if="searchStore.total !== 0" :template="{
+            <Paginator class="mb-4" :rows=rows :totalRecords=searchStore.total v-model:first="offset"
+              @page="onPageChange" v-if="searchStore.total !== 0" :template="{
                 '640px': 'PrevPageLink CurrentPageReport NextPageLink JumpToPageInput',
                 default: 'FirstPageLink PrevPageLink PageLinks NextPageLink LastPageLink JumpToPageDropdown JumpToPageInput'
               }">

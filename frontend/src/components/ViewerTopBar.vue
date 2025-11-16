@@ -16,36 +16,35 @@ const route = useRoute();
 const tid = Number(route.params.tid);
 
 onMounted(async () => {
-  setColors();
+	setColors();
 
-  const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+	const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
 
-  if (mediaQuery.matches && !isDarkMode.value) {
-    toggleDarkMode();
-  } else if (!mediaQuery.matches && isDarkMode.value) {
-    toggleDarkMode();
-  }
+	if (mediaQuery.matches && !isDarkMode.value) {
+		toggleDarkMode();
+	} else if (!mediaQuery.matches && isDarkMode.value) {
+		toggleDarkMode();
+	}
 
-  const index = progressStore.value.findIndex((item) => item.tid === tid);
+	const index = progressStore.value.findIndex((item) => item.tid === tid);
 
+	if (index !== -1) {
+		await new Promise<void>((resolve) => {
+			if (!novelStore.isLoading) return resolve();
 
-  if (index !== -1) {
-    await new Promise<void>((resolve) => {
-      if (!novelStore.isLoading) return resolve();
+			const stop = watch(
+				() => !novelStore.isLoading,
+				(val) => {
+					if (val) {
+						stop();
+						resolve();
+					}
+				},
+			);
+		});
 
-      const stop = watch(
-        () => !novelStore.isLoading,
-        (val) => {
-          if (val) {
-            stop();
-            resolve();
-          }
-        }
-      );
-    });
-
-    slideValue.value = progressStore.value[index]!.progress;
-  }
+		slideValue.value = progressStore.value[index]!.progress;
+	}
 });
 
 const novelStore = useNovelStore();
@@ -54,87 +53,87 @@ const slideValue = ref(0);
 const isDragging = ref(false);
 
 const onSlideStart = () => {
-  isDragging.value = true;
+	isDragging.value = true;
 };
 
 const onSlideEnd = () => {
-  isDragging.value = false;
+	isDragging.value = false;
 };
 
 const isFav = computed(() =>
-  favorites.value.some((f) => f.tid === novelStore.tid),
+	favorites.value.some((f) => f.tid === novelStore.tid),
 );
 
 function toggleFav() {
-  isFav.value ? removeFav() : addFav();
+	isFav.value ? removeFav() : addFav();
 }
 
 const addFav = () => {
-  const fav: Fav = {
-    tid: novelStore.tid,
-    title: novelStore.title,
-  };
-  if (!isFav.value) {
-    favorites.value.push(fav);
-  }
+	const fav: Fav = {
+		tid: novelStore.tid,
+		title: novelStore.title,
+	};
+	if (!isFav.value) {
+		favorites.value.push(fav);
+	}
 };
 
 const removeFav = () => {
-  favorites.value = favorites.value.filter((f) => f.tid !== novelStore.tid);
+	favorites.value = favorites.value.filter((f) => f.tid !== novelStore.tid);
 };
 
 const isHidden = ref(false);
 let lastScrollY = window.scrollY;
 
 const handleScroll = () => {
-  if (!novelStore.isLoading) {
-    if (!isDragging.value) {
-      const currentScrollY = window.scrollY;
-      if (currentScrollY > lastScrollY) {
-        isHidden.value = true;
-      } else {
-        isHidden.value = false;
-      }
-      lastScrollY = currentScrollY;
-    }
-  }
+	if (!novelStore.isLoading) {
+		if (!isDragging.value) {
+			const currentScrollY = window.scrollY;
+			if (currentScrollY > lastScrollY) {
+				isHidden.value = true;
+			} else {
+				isHidden.value = false;
+			}
+			lastScrollY = currentScrollY;
+		}
+	}
 };
 
 useEventListener(window, "scroll", handleScroll);
 
 const updateProgress = () => {
-  if (!novelStore.isLoading) {
-    const scrollTop = window.scrollY;
-    const scrollHeight =
-      document.documentElement.scrollHeight - window.innerHeight;
-    const progress = scrollHeight > 0 ? (scrollTop / scrollHeight) * 100 : 0;
+	if (!novelStore.isLoading) {
+		const scrollTop = window.scrollY;
+		const scrollHeight =
+			document.documentElement.scrollHeight - window.innerHeight;
+		const progress = scrollHeight > 0 ? (scrollTop / scrollHeight) * 100 : 0;
 
-    if (!isDragging.value) {
-      slideValue.value = progress;
-    }
+		if (!isDragging.value) {
+			slideValue.value = progress;
+		}
 
-    const index = progressStore.value.findIndex((item) => item.tid === tid);
+		const index = progressStore.value.findIndex((item) => item.tid === tid);
 
-    if (index !== -1) {
-      progressStore.value[index]!.progress = progress;
-    } else {
-      progressStore.value.push({ tid, progress });
-    }
-  }
+		if (index !== -1) {
+			progressStore.value[index]!.progress = progress;
+		} else {
+			progressStore.value.push({ tid, progress });
+		}
+	}
 };
 
 useEventListener(window, "scroll", updateProgress);
 
 watch(slideValue, (val) => {
-  if (isDragging.value) {
-    const doc = document.documentElement;
-    const scrollHeight = doc.scrollHeight - doc.clientHeight;
-    const targetScroll = (val / 100) * scrollHeight;
-    window.scrollTo({
-      top: targetScroll,
-      behavior: "smooth",
-    });
-  }
+	if (isDragging.value) {
+		const doc = document.documentElement;
+		const scrollHeight = doc.scrollHeight - doc.clientHeight;
+		const targetScroll = (val / 100) * scrollHeight;
+		window.scrollTo({
+			top: targetScroll,
+			behavior: "smooth",
+		});
+	}
 });
 </script>
 
