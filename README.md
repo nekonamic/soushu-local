@@ -20,13 +20,9 @@ https://soushu.inf.li/
 
 ---
 
-- 小说数据
+- 数据库与分词数据
 
-https://pan.baidu.com/s/1RwSxAgh4lVkv8o3dJpqcLQ?pwd=nrng 提取码: nrng
-
-- 分词数据
-
-https://pan.baidu.com/s/1RXYHeUraxm6CpCsjNd4F7g?pwd=cu7e 提取码: cu7e
+https://pan.baidu.com/s/1F4ON4mspyJOAPXD1Kgkmkg?pwd=x6y8 提取码: x6y8 
 
 **注意**
 
@@ -70,22 +66,22 @@ cargo build --release
 
 ## 运行时文件结构
 
-将前端构建后的文件放置于`./data/web/`文件夹中
+将前端构建后的文件放置于`./web/`文件夹中
 
 将后端编译后的二进制文件放置于`./start.exe`
 
 将小说数据库放置于`./data/novels.db`
 
-将分词数据放置于`./index/`
+将分词数据放置于`./data/index/`
 
 ```
 .
 ├── start.exe
 ├── data
-│   ├── web
+│   ├── index
 │   │   └── ...
 │   └── novels.db
-└── index
+└── web
     └── ...
 ```
 
